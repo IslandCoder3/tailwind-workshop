@@ -4,7 +4,7 @@ A single-file, interactive learning tool for Tailwind CSS — 43 hands-on statio
 
 **Category:** Education / Developer Tools
 
-**Live site:** None — it's a single HTML file, open it directly in any browser
+**Live site:** https://islandcoder3.github.io/tailwind-workshop/
 
 **Built with:** HTML, CSS, JavaScript
 
