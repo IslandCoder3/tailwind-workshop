@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Utility Bench — Tailwind Drawing Set</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-bg: #0A0F1A;
+    --sheet: #0F1A2B;
+    --sheet-2: #152238;
+    --sheet-3: #1B2A45;
+    --line: #24344F;
+    --line-soft: #1A283F;
+    --grid: #12203A;
+    --ink: #E7ECF5;
+    --ink-dim: #8695AC;
+    --ink-faint: #566178;
+    --blue: #5AA9E6;
+    --blue-dim: #2E5C82;
+    --amber: #E3A64F;
+    --verified: #6FCF97;
+    --alert: #E8697A;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at 20% -10%, #16233a 0%, transparent 55%), var(--ink-bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    position:relative;
+  }
+  #bg-layer{
+    position:fixed; inset:-40px; z-index:-1; pointer-events:none;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/28px 28px;
+    will-change: transform;
+    animation: gridDrift 90s ease-in-out infinite;
+  }
+  @keyframes gridDrift{
+    0%{transform:translate(0,0);}
+    50%{transform:translate(-8px,-5px);}
+    100%{transform:translate(0,0);}
+  }
+  .f-display{font-family:'Space Grotesk', sans-serif;}
+  .f-mono{font-family:'IBM Plex Mono', monospace;}
+  .label{font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.11em; color:var(--ink-faint);}
+  ::selection{background:var(--blue-dim); color:#fff;}
+  .scroll::-webkit-scrollbar{width:7px; height:7px;}
+  .scroll::-webkit-scrollbar-thumb{background:var(--line); border-radius:3px;}
+  .scroll::-webkit-scrollbar-track{background:transparent;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
+  @keyframes sheetIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+  .sheet-in{animation: sheetIn .45s cubic-bezier(.2,.7,.3,1) both;}
+  @keyframes stampIn{
+    0%{opacity:0; transform:rotate(-11deg) scale(1.5);}
+    60%{opacity:1; transform:rotate(-9deg) scale(0.96);}
+    100%{opacity:1; transform:rotate(-9deg) scale(1);}
+  }
+  @media (prefers-reduced-motion: reduce){ * { animation:none !important; transition:none !important; } }
+
+  /* ---------- shell ---------- */
+  .shell{max-width:1440px; margin:0 auto; padding:0 22px 70px;}
+  .topbar{position:sticky; top:0; z-index:40; background:rgba(10,15,26,.88); backdrop-filter:blur(10px); border-bottom:1px solid var(--line-soft);}
+  .topbar-in{max-width:1440px; margin:0 auto; padding:16px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px;}
+  .brandmark{display:flex; align-items:center; gap:12px; background:none; border:none; cursor:pointer; padding:0; text-align:left; transition:opacity .15s ease;}
+  .brandmark:hover{opacity:.82;}
+  .brandmark svg{transition:transform .3s cubic-bezier(.2,.8,.3,1);}
+  .brandmark:hover svg{transform:rotate(-8deg);}
+  .brand-title{font-size:16px; font-weight:600; letter-spacing:.01em; line-height:1; color:var(--ink);}
+  .brand-sub{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); margin-top:5px;}
+  .topbar-right{display:flex; align-items:center; gap:18px;}
+  .index-link{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); background:none; border:1px solid var(--line); padding:7px 12px; border-radius:6px; cursor:pointer; transition:color .15s ease, border-color .15s ease, transform .15s ease;}
+  .index-link:hover{color:var(--blue); border-color:var(--blue); transform:translateY(-1px);}
+  .index-link:active{transform:scale(.96);}
+
+  .ruler{display:flex; align-items:center; gap:10px;}
+  .ruler-ticks{display:flex; gap:2.5px;}
+  .tick{width:10px; height:7px; border-radius:1px; background:var(--line); transition:background-color .3s ease, box-shadow .3s ease, transform .3s ease;}
+  .tick.on{background:var(--blue); box-shadow:0 0 7px rgba(90,169,230,.55);}
+  .ruler-num{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); white-space:nowrap;}
+
+  .panel{background:var(--sheet); border:1px solid var(--line-soft); border-radius:7px; box-shadow:0 10px 28px -22px rgba(0,0,0,.7);}
+  .panel-head{padding:12px 16px; border-bottom:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between;}
+  .nav-row{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px;}
+
+  /* ================= COVER SHEET ================= */
+  #cover{padding-top:64px;}
+  #cover > .label, #cover > h1, #cover > p, #cover > .cover-cta{opacity:0; animation:cardIn .6s cubic-bezier(.2,.8,.3,1) forwards;}
+  #cover > .label{animation-delay:.02s;} #cover > h1{animation-delay:.08s;}
+  #cover > p{animation-delay:.16s;} #cover > .cover-cta{animation-delay:.24s;}
+  .cover-eyebrow{color:var(--amber); margin-bottom:14px;}
+  .cover-title{font-size:clamp(34px,5vw,58px); font-weight:600; letter-spacing:-.02em; line-height:1.05; margin:0 0 20px; max-width:20ch;}
+  .cover-title .grad{background:linear-gradient(100deg, var(--blue) 10%, #8FD1C7 55%, var(--amber) 100%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .caret{display:inline-block; width:3px; height:.85em; background:var(--blue); margin-left:6px; vertical-align:-2px; animation:caretBlink 1.1s step-end infinite;}
+  @keyframes caretBlink{0%,45%{opacity:1;} 50%,95%{opacity:0;} 100%{opacity:1;}}
+  .cover-sub{font-size:15.5px; line-height:1.75; color:var(--ink-dim); max-width:56ch; margin:0 0 30px;}
+  .cover-cta{display:flex; align-items:center; gap:14px; margin-bottom:56px; flex-wrap:wrap;}
+  .btn{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px; padding:11px 20px; border-radius:6px; cursor:pointer; border:1px solid transparent; transition:transform .15s cubic-bezier(.2,.8,.3,1), box-shadow .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;}
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:var(--blue); color:#0A0F1A;}
+  .btn-primary:hover{background:#71B7EA; transform:translateY(-1px); box-shadow:0 10px 24px -10px rgba(90,169,230,.55);}
+  .btn-ghost{background:none; border-color:var(--line); color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--blue); color:var(--blue); transform:translateY(-1px);}
+  .btn-hint{background:none; border-color:var(--line); color:var(--ink-dim);}
+  .btn-hint:hover{color:var(--amber); border-color:var(--amber); transform:translateY(-1px);}
+
+  @keyframes cardIn{from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);}}
+  .chapter-card{
+    position:relative; overflow:hidden; padding:18px; cursor:pointer; text-align:left;
+    color:var(--ink); background:var(--sheet);
+    opacity:0; animation:cardIn .55s cubic-bezier(.2,.8,.3,1) forwards;
+    transition:border-color .2s ease, transform .2s cubic-bezier(.2,.8,.3,1), box-shadow .2s ease;
+  }
+  .chapter-card::before{
+    content:''; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0;
+    background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%), rgba(90,169,230,.16), transparent 68%);
+    transition:opacity .3s ease;
+  }
+  .chapter-card:hover{border-color:var(--blue); transform:translateY(-3px); box-shadow:0 16px 32px -16px rgba(90,169,230,.45), 0 0 0 1px rgba(90,169,230,.22);}
+  .chapter-card:hover::before{opacity:1;}
+  .chapter-card:active{transform:translateY(-1px) scale(.995);}
+  .chapter-card > *{position:relative; z-index:1;}
+  .chapter-top{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;}
+  .chapter-num{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--blue); display:block;}
+  .chapter-name{font-family:'Space Grotesk',sans-serif; font-size:16.5px; font-weight:600; margin:0 0 6px; color:var(--ink);}
+  .chapter-sheets{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-dim); margin:0;}
+  .chapter-meta{display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:12px; border-top:1px solid var(--line-soft);}
+  .chapter-scale{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-faint);}
+  .chapter-cta{font-family:'Space Grotesk',sans-serif; font-size:11.5px; font-weight:600; color:var(--blue); opacity:0; transform:translateX(-4px); transition:opacity .2s ease, transform .2s ease;}
+  .chapter-card:hover .chapter-cta{opacity:1; transform:translateX(0);}
+  .chapter-ring{
+    --pct:0; width:36px; height:36px; border-radius:50%; flex-shrink:0; position:relative;
+    background:conic-gradient(var(--blue) calc(var(--pct) * 1%), var(--line) 0);
+    display:flex; align-items:center; justify-content:center; transition:transform .2s ease;
+  }
+  .chapter-card:hover .chapter-ring{transform:scale(1.08);}
+  .chapter-ring::before{content:''; position:absolute; inset:3px; border-radius:50%; background:var(--sheet);}
+  .chapter-ring span{position:relative; z-index:1; font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--ink-dim);}
+  .chapter-ring.done span{color:var(--verified);}
+
+  /* ================= LEARNING PATH (tier-grouped grid) ================= */
+  .tier-section{margin-bottom:30px;}
+  .tier-head{display:flex; align-items:baseline; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
+  .tier-badge{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; padding:3px 9px; border-radius:20px; border:1px solid var(--tier-color, var(--blue)); color:var(--tier-color, var(--blue));}
+  .tier-name{font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600; margin:0;}
+  .tier-desc{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint);}
+  .path{display:grid; grid-template-columns:repeat(auto-fill, minmax(228px,1fr)); gap:12px;}
+  .chapter-card[data-status="todo"]{opacity:.75;}
+  .chapter-card[data-status="todo"]:hover{opacity:1;}
+  .chapter-card[data-status="current"]{border-color:var(--blue); box-shadow:0 0 0 1px rgba(90,169,230,.35), 0 0 20px -6px rgba(90,169,230,.4);}
+  .chapter-card[data-status="current"] .chapter-num::before{content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--blue); margin-right:6px; vertical-align:1px; animation:nodePulseDot 1.8s ease-in-out infinite;}
+  @keyframes nodePulseDot{0%,100%{box-shadow:0 0 0 0 rgba(90,169,230,.5);} 50%{box-shadow:0 0 0 4px rgba(90,169,230,0);}}
+
+  /* in-workspace breadcrumb + chapter progress */
+  .breadcrumb{display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint); margin-bottom:10px; flex-wrap:wrap;}
+  .breadcrumb .sep{color:var(--line);}
+  .breadcrumb .current{color:var(--ink-dim);}
+  .chapter-progress-bar{height:3px; border-radius:2px; background:var(--line-soft); overflow:hidden; margin-top:8px; max-width:280px;}
+  .chapter-progress-fill{height:100%; background:var(--blue); border-radius:2px; transition:width .4s cubic-bezier(.2,.8,.3,1);}
+
+  /* chapter-complete toast */
+  #chapter-toast{position:fixed; left:50%; top:20px; transform:translateX(-50%) translateY(-16px); z-index:60; opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease; background:var(--sheet); border:1px solid var(--verified); border-radius:7px; padding:10px 18px; font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600; color:var(--verified); box-shadow:0 12px 28px -10px rgba(0,0,0,.5);}
+  #chapter-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  #workspace{display:none;}
+  .grid-main{display:grid; grid-template-columns:264px 1fr; gap:22px; padding-top:26px;}
+  @media (max-width:980px){ .grid-main{grid-template-columns:1fr;} .grid-main aside{order:2;} .grid-main main{order:1;} #sheet-index{max-height:320px;} }
+
+  #sheet-index{max-height:460px; overflow-y:auto;}
+  .chapter-head{position:sticky; top:0; z-index:2; background:var(--sheet); display:flex; align-items:center; justify-content:space-between; padding:9px 16px 7px; border-bottom:1px solid var(--line-soft);}
+  .chapter-head-name{font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-faint);}
+  .chapter-head-count{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-faint);}
+  .sheet-row{display:flex; align-items:center; gap:11px; text-align:left; width:100%; padding:9px 16px; background:none; border:none; border-left:2px solid transparent; cursor:pointer; color:var(--ink-dim); border-bottom:1px solid var(--line-soft); transition:background-color .15s ease, border-left-color .15s ease, padding-left .15s ease, color .15s ease;}
+  .sheet-row:hover{background:var(--sheet-2); padding-left:20px; color:var(--ink);}
+  .sheet-row.active{border-left-color:var(--blue); background:var(--sheet-2); color:var(--ink);}
+  .sheet-num{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-faint); width:26px; flex-shrink:0;}
+  .sheet-row.active .sheet-num{color:var(--blue);}
+  .sheet-status{width:13px; height:13px; border-radius:50%; border:1.5px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .sheet-status.done{border-color:var(--verified); background:rgba(111,207,151,.12);}
+  .sheet-status.done::after{content:'✓'; font-size:8.5px; color:var(--verified); line-height:1;}
+  .sheet-labels{display:flex; flex-direction:column; line-height:1.3; min-width:0;}
+  .sheet-title{font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+  .title-block{margin-top:16px; position:relative;}
+  .tb-grid{display:grid; grid-template-columns:1fr 1fr;}
+  .tb-cell{padding:10px 14px; border-right:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft);}
+  .tb-cell:nth-child(2n){border-right:none;}
+  .tb-cell:nth-last-child(-n+2){border-bottom:none;}
+  .tb-cell .label{margin-bottom:4px; display:block;}
+  .tb-val{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink);}
+  .tb-val.accent{color:var(--blue);}
+
+  .howto{margin-top:16px; padding:16px; font-size:12.5px; color:var(--ink-dim); line-height:1.65;}
+  .howto strong{color:var(--ink); font-weight:600;}
+  kbd.k{font-family:'IBM Plex Mono',monospace; color:var(--blue); background:var(--sheet-3); padding:1px 6px; border-radius:3px; font-size:11.5px;}
+
+  .eyebrow{color:var(--amber); margin-bottom:6px;}
+  .lesson-title{font-size:25px; font-weight:600; margin:0; letter-spacing:-.01em;}
+
+  .brief-panel{position:relative; padding:20px 22px; margin-bottom:20px; overflow:hidden;}
+  .brief-panel::before{content:''; position:absolute; top:0; right:0; width:26px; height:26px; background:linear-gradient(135deg, transparent 50%, var(--sheet-3) 50%); border-bottom:1px solid var(--line-soft); border-left:1px solid var(--line-soft);}
+  .brief-text{font-size:14.5px; line-height:1.7; margin:0; max-width:64ch; color:var(--ink);}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:960px){ .split{grid-template-columns:1fr;} }
+
+  .reg{position:relative;}
+  .reg-mark{position:absolute; width:9px; height:9px; opacity:.5; pointer-events:none; z-index:5;}
+  .reg-mark::before, .reg-mark::after{content:''; position:absolute; background:var(--ink-faint);}
+  .reg-mark::before{width:100%; height:1px; top:50%; left:0;}
+  .reg-mark::after{width:1px; height:100%; left:50%; top:0;}
+  .reg-tl{top:-4px; left:-4px;} .reg-tr{top:-4px; right:-4px;}
+  .reg-bl{bottom:-4px; left:-4px;} .reg-br{bottom:-4px; right:-4px;}
+
+  .code-panel, .out-panel{display:flex; flex-direction:column; overflow:hidden;}
+  .toolbar{display:flex; align-items:center; justify-content:space-between; padding:0 6px 0 16px; border-bottom:1px solid var(--line-soft);}
+  .toolbar .label{padding:11px 0;}
+  .icon-btn{background:none; border:none; color:var(--ink-faint); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:9px 10px; cursor:pointer; border-radius:3px;}
+  .icon-btn:hover{color:var(--ink); background:var(--sheet-2);}
+
+  .editor-wrap{position:relative; flex:1; min-height:280px;}
+  .editor-wrap pre, .editor-wrap textarea{position:absolute; inset:0; margin:0; width:100%; height:100%; padding:16px 18px; font-family:'IBM Plex Mono',monospace; font-size:12.6px; line-height:1.7; white-space:pre-wrap; word-break:break-word; overflow:auto; border:none;}
+  .editor-wrap pre{background:transparent; color:var(--ink); pointer-events:none; z-index:1;}
+  .editor-wrap textarea{background:transparent; color:transparent; caret-color:var(--blue); resize:none; outline:none; z-index:2;}
+  .tk-tag{color:var(--ink-faint);}
+  .tk-attr{color:var(--amber);}
+  .tk-cls{color:var(--blue); border-radius:2px; transition:background-color .15s ease, box-shadow .15s ease;}
+  .tk-cls.mod{color:var(--amber);}
+  .tk-cls.tk-hl{background:rgba(90,169,230,.28); box-shadow:0 0 0 1px rgba(90,169,230,.5);}
+
+  .action-row{display:flex; align-items:center; gap:10px; padding:12px 14px; border-top:1px solid var(--line-soft);}
+  #check-result{padding:0 14px 14px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; min-height:18px;}
+
+  iframe#preview-frame{width:100%; flex:1; min-height:280px; border:none; background:#fff;}
+  .live-dot{width:6px; height:6px; border-radius:50%; background:var(--verified); display:inline-block; margin-right:6px; box-shadow:0 0 6px rgba(111,207,151,.7);}
+
+  .bom{margin-top:20px; overflow:hidden;}
+  .bom-head{display:grid; grid-template-columns:34px 160px 1fr; gap:12px; padding:10px 18px; border-bottom:1px solid var(--line-soft);}
+  #bom-body{max-height:280px; overflow-y:auto;}
+  .bom-row{display:grid; grid-template-columns:34px 160px 1fr; gap:12px; padding:9px 18px; border-bottom:1px solid var(--line-soft); align-items:center;}
+  .bom-row:last-child{border-bottom:none;}
+  .bom-row:hover, .bom-row.hl{background:var(--sheet-2);}
+  .bom-idx{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint);}
+  .bom-cls{font-family:'IBM Plex Mono',monospace; font-size:12.3px; color:var(--blue); word-break:break-all;}
+  .bom-cls.mod{color:var(--amber);}
+  .bom-meaning{font-size:12.3px; color:var(--ink-dim);}
+  .bom-meaning .tag{color:var(--amber);}
+  .bom-empty{padding:16px 18px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-faint);}
+
+  /* completion stamp */
+  #stamp{position:fixed; right:26px; bottom:26px; z-index:50; display:none; align-items:center; justify-content:center; width:118px; height:118px; border-radius:50%; border:2.5px dashed var(--verified); color:var(--verified); text-align:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; letter-spacing:.06em; line-height:1.35; background:rgba(111,207,151,.06); animation: stampIn .5s cubic-bezier(.3,1.4,.5,1) both; box-shadow:0 0 30px rgba(111,207,151,.25);}
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width:760px){
+    .shell{padding:0 14px 50px;}
+    .topbar-in{padding:12px 14px;}
+    .brand-sub{display:none;}
+    .ruler-ticks{display:none;}
+    .ruler{gap:0;}
+    .index-link{padding:7px 10px; font-size:10px;}
+    #cover{padding-top:36px;}
+    .cover-title{font-size:clamp(28px,8vw,40px); max-width:100%;}
+    .cover-sub{font-size:14px;}
+    .path{grid-template-columns:1fr 1fr; gap:10px;}
+    .tier-head{gap:8px;}
+    .chapter-card{padding:14px;}
+    .chapter-name{font-size:14.5px;}
+    .lesson-title{font-size:20px;}
+    .brief-text{font-size:13.5px;}
+    .brief-panel{padding:16px;}
+    .action-row{flex-wrap:wrap; row-gap:8px;}
+    .tb-grid{grid-template-columns:1fr 1fr;}
+    .bom-head{display:none;}
+    .bom-row{display:block; padding:10px 14px;}
+    .bom-row .bom-idx{margin-right:8px;}
+    .bom-row .bom-meaning{display:block; margin-top:3px; padding-left:0;}
+    .editor-wrap, iframe#preview-frame{min-height:220px;}
+    .nav-row{grid-template-columns:1fr; gap:10px;}
+    #stamp{width:88px; height:88px; font-size:10px; right:16px; bottom:16px;}
+  }
+  @media (max-width:440px){
+    .tb-grid{grid-template-columns:1fr;}
+    .tb-cell{border-right:none !important;}
+    .cover-cta{gap:10px;}
+    .btn{padding:10px 16px; font-size:13px;}
+    .path{grid-template-columns:1fr;}
+  }
+  @media (hover:none){
+    .chapter-card::before{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="bg-layer"></div>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <button class="brandmark" id="brand-home">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+        <rect x="1" y="1" width="28" height="28" rx="4" stroke="#5AA9E6" stroke-width="1.4"/>
+        <path d="M8 21 L15 8 L22 21" stroke="#5AA9E6" stroke-width="1.4" stroke-linejoin="round"/>
+        <circle cx="15" cy="8" r="1.6" fill="#E3A64F"/>
+        <path d="M6 24 H24" stroke="#5AA9E6" stroke-width="1" stroke-dasharray="1.6 2"/>
+      </svg>
+      <div>
+        <div class="brand-title f-display">Utility Bench</div>
+        <div class="brand-sub">Tailwind Drawing Set</div>
+      </div>
+    </button>
+    <div class="topbar-right">
+      <div class="ruler">
+        <span class="ruler-num" id="progress-label">0 / 0</span>
+        <div class="ruler-ticks" id="ruler-ticks"></div>
+      </div>
+      <button class="index-link" id="index-link">Sheet index</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- ================= COVER ================= -->
+  <section id="cover">
+    <p class="label cover-eyebrow">Drawing set no. 001 · Rev. 2026</p>
+    <h1 class="cover-title f-display">Tailwind, <span class="grad">sheet by sheet.</span><span class="caret"></span></h1>
+    <p class="cover-sub">Every utility class is really just a specification — a measurement, a color call-out, a behavior under a given condition. This set walks the full catalog as a series of drafting sheets, basic to advanced: every layout, typography, color, effect, motion, form and state utility Tailwind ships, plus two reference sheets for the palette and the config system.</p>
+    <div class="cover-cta">
+      <button class="btn btn-primary" id="begin-btn">Open Sheet 01</button>
+      <button class="btn btn-ghost" id="resume-btn" style="display:none;">Resume — Sheet <span id="resume-num"></span></button>
+    </div>
+    <div id="learning-path"></div>
+  </section>
+
+  <!-- ================= WORKSPACE ================= -->
+  <div id="workspace">
+    <div class="grid-main">
+
+      <aside>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="label">Sheet index</span>
+            <span class="label" id="sheet-count">01–24</span>
+          </div>
+          <nav id="sheet-index" class="scroll"></nav>
+        </div>
+
+        <div class="panel title-block">
+          <div class="tb-grid">
+            <div class="tb-cell"><span class="label">Sheet</span><span class="tb-val accent" id="tb-sheet">—</span></div>
+            <div class="tb-cell"><span class="label">Chapter</span><span class="tb-val" id="tb-chapter">—</span></div>
+            <div class="tb-cell"><span class="label">Discipline</span><span class="tb-val" id="tb-discipline">—</span></div>
+            <div class="tb-cell"><span class="label">Scale</span><span class="tb-val" id="tb-scale">—</span></div>
+            <div class="tb-cell"><span class="label">Status</span><span class="tb-val" id="tb-status">—</span></div>
+            <div class="tb-cell"><span class="label">Drawn by</span><span class="tb-val">You</span></div>
+          </div>
+        </div>
+
+        <div class="panel howto">
+          <strong class="f-display" style="font-size:13px; display:block; margin-bottom:6px;">How the bench works</strong>
+          Edit the specification (real HTML) on the left. The rendered view updates live. Hover any row in the <strong>bill of materials</strong> to trace where that class is used. Press <kbd class="k">Check</kbd> when it matches the brief.
+        </div>
+      </aside>
+
+      <main>
+        <div id="lesson-content">
+          <div id="lesson-header">
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <p class="label eyebrow" id="lesson-eyebrow">—</p>
+            <h2 class="lesson-title f-display" id="lesson-title">—</h2>
+            <div class="chapter-progress-bar"><div class="chapter-progress-fill" id="chapter-progress-fill" style="width:0%"></div></div>
+          </div>
+
+          <div class="panel brief-panel" style="margin-top:20px;">
+            <p class="label" style="margin-bottom:8px;">Specification note</p>
+            <p class="brief-text" id="lesson-brief"></p>
+          </div>
+
+          <div class="split">
+            <div class="panel code-panel reg">
+              <span class="reg-mark reg-tl"></span><span class="reg-mark reg-tr"></span>
+              <span class="reg-mark reg-bl"></span><span class="reg-mark reg-br"></span>
+              <div class="toolbar">
+                <span class="label">Specification — HTML</span>
+                <button class="icon-btn" id="reset-btn">reset</button>
+              </div>
+              <div class="editor-wrap">
+                <pre id="code-highlight" class="scroll" aria-hidden="true"></pre>
+                <textarea id="code-input" class="scroll" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+              </div>
+              <div class="action-row">
+                <button class="btn btn-primary" id="run-btn">▶ Run</button>
+                <button class="btn btn-ghost" id="check-btn">Check</button>
+                <button class="btn btn-hint" id="hint-btn">Hint</button>
+              </div>
+              <div id="check-result"></div>
+            </div>
+
+            <div class="panel out-panel reg">
+              <span class="reg-mark reg-tl"></span><span class="reg-mark reg-tr"></span>
+              <span class="reg-mark reg-bl"></span><span class="reg-mark reg-br"></span>
+              <div class="toolbar">
+                <span class="label">Rendered view</span>
+                <span class="label" style="padding:11px 10px;"><span class="live-dot"></span>live</span>
+              </div>
+              <iframe id="preview-frame" title="Live preview"></iframe>
+            </div>
+          </div>
+
+          <div class="panel bom">
+            <div class="panel-head"><span class="label">Bill of materials — every class in this specification, decoded</span></div>
+            <div class="bom-head"><span class="label">№</span><span class="label">Call-out</span><span class="label">Spec</span></div>
+            <div id="bom-body" class="scroll"></div>
+          </div>
+        </div>
+
+        <div class="nav-row">
+          <button class="btn btn-ghost" id="prev-btn" style="text-align:left;">← Previous sheet</button>
+          <button class="btn btn-primary" id="next-btn" style="text-align:right;">Next sheet →</button>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<div id="chapter-toast"></div>
+<div id="stamp">SET<br>COMPLETE</div>
+
+<script>
+/* ================= decoder rules ================= */
+const BREAKPOINTS = {sm:'≥640px', md:'≥768px', lg:'≥1024px', xl:'≥1280px', '2xl':'≥1536px'};
+const STATES = {hover:'on hover', focus:'on focus', active:'while pressed', disabled:'when disabled', checked:'when checked', required:'when required', invalid:'when invalid', 'group-hover':'on parent hover', 'peer-checked':'when sibling peer is checked', dark:'in dark mode', first:'on first child', last:'on last child', odd:'on odd children', even:'on even children', 'focus-within':'when a descendant is focused', 'focus-visible':'on keyboard focus only', 'aria-selected':'when aria-selected', 'aria-checked':'when aria-checked', 'has-checked':'when it contains a checked element', print:'when printing', 'motion-reduce':'when reduced motion is preferred', 'motion-safe':'when motion is allowed'};
+const SPACING_REM = n => (parseFloat(n)*0.25).toString().replace(/\.0$/,'') + 'rem';
+
+function decodeToken(raw){
+  let token = raw, prefixes = [], m;
+  while((m = token.match(/^([a-zA-Z0-9@\-\[\]="']+):/))){ prefixes.push(m[1]); token = token.slice(m[0].length); }
+  const prefixText = prefixes.map(p => BREAKPOINTS[p] ? `at ${BREAKPOINTS[p]}` : (STATES[p] ? STATES[p] : p)).join(', ');
+  const dirWord = {top:'top', right:'right', bottom:'bottom', left:'left'};
+  const rules = [
+    [/^flex$/, 'display: flex'], [/^grid$/, 'display: grid'], [/^hidden$/, 'display: none'],
+    [/^block$/, 'display: block'], [/^inline-flex$/, 'display: inline-flex'],
+    [/^flex-col$/, 'flex-direction: column'], [/^flex-row$/, 'flex-direction: row'],
+    [/^flex-wrap$/, 'flex-wrap: wrap'], [/^flex-1$/, 'flex: 1 1 0% (grow/shrink equally)'],
+    [/^items-center$/, 'align-items: center'], [/^items-start$/, 'align-items: flex-start'], [/^items-end$/, 'align-items: flex-end'],
+    [/^justify-center$/, 'justify-content: center'], [/^justify-between$/, 'justify-content: space-between'],
+    [/^justify-around$/, 'justify-content: space-around'], [/^justify-end$/, 'justify-content: flex-end'],
+    [/^place-items-(center|start|end|stretch)$/, (v)=>`place-items: ${v} (aligns on both axes)`],
+    [/^gap-(\d+)$/, (n)=>`gap: ${SPACING_REM(n)}`],
+    [/^size-(\d+)$/, (n)=>`width & height: ${SPACING_REM(n)} (both axes)`],
+    [/^p-(\d+)$/, (n)=>`padding: ${SPACING_REM(n)} (all sides)`],
+    [/^px-(\d+)$/, (n)=>`padding-left/right: ${SPACING_REM(n)}`], [/^py-(\d+)$/, (n)=>`padding-top/bottom: ${SPACING_REM(n)}`],
+    [/^pt-(\d+)$/, (n)=>`padding-top: ${SPACING_REM(n)}`], [/^pb-(\d+)$/, (n)=>`padding-bottom: ${SPACING_REM(n)}`],
+    [/^m-(\d+)$/, (n)=>`margin: ${SPACING_REM(n)} (all sides)`], [/^mx-auto$/, 'margin-left/right: auto (centers block)'],
+    [/^mx-(\d+)$/, (n)=>`margin-left/right: ${SPACING_REM(n)}`], [/^my-(\d+)$/, (n)=>`margin-top/bottom: ${SPACING_REM(n)}`],
+    [/^mt-(\d+)$/, (n)=>`margin-top: ${SPACING_REM(n)}`],
+    [/^w-full$/, 'width: 100%'], [/^w-screen$/, 'width: 100vw'], [/^w-(\d+)$/, (n)=>`width: ${SPACING_REM(n)}`],
+    [/^w-\[(.+)\]$/, (n)=>`width: ${n} (arbitrary value)`],
+    [/^min-w-\[(.+)\]$/, (v)=>`min-width: ${v} (arbitrary value)`], [/^min-w-(\d+)$/, (n)=>`min-width: ${SPACING_REM(n)}`],
+    [/^max-w-\[(.+)\]$/, (v)=>`max-width: ${v} (arbitrary value)`], [/^max-w-(\w+)$/, (n)=>`max-width: ${n} breakpoint scale`],
+    [/^h-full$/, 'height: 100%'], [/^h-screen$/, 'height: 100vh'], [/^h-(\d+)$/, (n)=>`height: ${SPACING_REM(n)}`],
+    [/^rounded$/, 'border-radius: 0.25rem'], [/^rounded-(sm|md|lg|xl|2xl|full)$/, (n)=>`border-radius: ${n} scale`],
+    [/^shadow$/, 'box-shadow: default elevation'], [/^shadow-(sm|md|lg|xl|2xl)$/, (n)=>`box-shadow: ${n} elevation`],
+    [/^ring-offset-(\d+)$/, (n)=>`ring offset: ${n}px`],
+    [/^ring-(\d+)$/, (n)=>`focus ring width: ${n}px (via box-shadow)`],
+    [/^ring-(\w+)-(\d+)$/, (c,n)=>`ring color: ${c}-${n}`],
+    [/^outline-none$/, 'outline: none'],
+    [/^border$/, 'border-width: 1px, all sides'], [/^border-(\d)$/, (n)=>`border-width: ${n}px`],
+    [/^border-(\w+)-(\d+)$/, (c,n)=>`border-color: ${c}-${n} from palette`],
+    [/^bg-gradient-to-(r|l|t|b|tr|tl|br|bl)$/, (d)=>`linear-gradient direction: to ${({r:'right',l:'left',t:'top',b:'bottom',tr:'top right',tl:'top left',br:'bottom right',bl:'bottom left'})[d]}`],
+    [/^from-(\w+)-(\d+)$/, (c,n)=>`gradient start color: ${c}-${n}`],
+    [/^via-(\w+)-(\d+)$/, (c,n)=>`gradient middle color: ${c}-${n}`],
+    [/^to-(\w+)-(\d+)$/, (c,n)=>`gradient end color: ${c}-${n}`],
+    [/^bg-(\w+)-(\d+)\/(\d+)$/, (c,n,o)=>`background-color: ${c}-${n} at ${o}% opacity`],
+    [/^bg-(white|black|transparent)\/(\d+)$/, (c,o)=>`background-color: ${c} at ${o}% opacity`],
+    [/^bg-(\w+)-(\d+)$/, (c,n)=>`background-color: ${c}-${n} (${n<400?'lighter':n>600?'darker':'mid'} shade)`],
+    [/^bg-(white|black|transparent)$/, (c)=>`background-color: ${c}`],
+    [/^bg-\[(.+)\]$/, (v)=>`background-color: ${v} (arbitrary value)`],
+    [/^text-(\w+)-(\d+)$/, (c,n)=>`color: ${c}-${n} from palette`], [/^text-(white|black)$/, (c)=>`color: ${c}`],
+    [/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)$/, (s)=>`font-size: ${s} step on the type scale`],
+    [/^font-(thin|light|normal|medium|semibold|bold|extrabold|black)$/, (w)=>`font-weight: ${w}`],
+    [/^text-(left|center|right|justify)$/, (a)=>`text-align: ${a}`],
+    [/^underline$/, 'text-decoration: underline'],
+    [/^truncate$/, 'clips overflow to one line with an ellipsis'],
+    [/^line-clamp-(\d+)$/, (n)=>`clips the text block to ${n} lines`],
+    [/^leading-(\w+)$/, (l)=>`line-height: ${l} step`], [/^tracking-(\w+)$/, (t)=>`letter-spacing: ${t} step`],
+    [/^opacity-(\d+)$/, (n)=>`opacity: ${n/100}`],
+    [/^blur$/, 'filter: blur(8px)'], [/^blur-(sm|md|lg|xl|2xl|3xl)$/, (s)=>`filter: blur — ${s} step`],
+    [/^backdrop-blur$/, 'backdrop-filter: blur(8px) — blurs what\'s behind this element'],
+    [/^backdrop-blur-(sm|md|lg|xl)$/, (s)=>`backdrop-filter: blur — ${s} step`],
+    [/^grayscale$/, 'filter: grayscale(100%)'],
+    [/^brightness-(\d+)$/, (n)=>`filter: brightness(${n}%)`],
+    [/^contrast-(\d+)$/, (n)=>`filter: contrast(${n}%)`],
+    [/^transition-colors$/, 'transition: color, background & border-color changes'],
+    [/^transition$/, 'transition: default properties, 150ms'],
+    [/^duration-(\d+)$/, (n)=>`transition-duration: ${n}ms`],
+    [/^animate-spin$/, 'animation: continuous 360° rotation'],
+    [/^animate-pulse$/, 'animation: opacity fade loop'],
+    [/^animate-bounce$/, 'animation: vertical bounce loop'],
+    [/^animate-ping$/, 'animation: expanding ping loop'],
+    [/^cursor-pointer$/, 'cursor: pointer'],
+    [/^overflow-hidden$/, 'overflow: hidden'],
+    [/^absolute$/, 'position: absolute'], [/^relative$/, 'position: relative'], [/^z-(\d+)$/, (n)=>`z-index: ${n}`],
+    [/^inset-x-(\d+)$/, (n)=>`left & right: ${SPACING_REM(n)}`], [/^inset-y-(\d+)$/, (n)=>`top & bottom: ${SPACING_REM(n)}`],
+    [/^inset-(\d+)$/, (n)=>`top/right/bottom/left: ${SPACING_REM(n)}`],
+    [/^(-)?(top|right|bottom|left)-([\d.]+)$/, (neg,side,n)=>`${dirWord[side]}: ${neg?'-':''}${SPACING_REM(n)}`],
+    [/^aspect-video$/, 'aspect-ratio: 16 / 9'], [/^aspect-square$/, 'aspect-ratio: 1 / 1'],
+    [/^aspect-\[(.+)\]$/, (v)=>`aspect-ratio: ${v} (arbitrary value)`],
+    [/^object-cover$/, 'object-fit: cover'], [/^object-contain$/, 'object-fit: contain'],
+    [/^grid-cols-(\d+)$/, (n)=>`grid-template-columns: repeat(${n}, 1fr)`], [/^col-span-(\d+)$/, (n)=>`spans ${n} grid column(s)`],
+    [/^space-x-(\d+)$/, (n)=>`gap-like spacing of ${SPACING_REM(n)} between horizontal siblings`],
+    [/^space-y-(\d+)$/, (n)=>`gap-like spacing of ${SPACING_REM(n)} between vertical siblings`],
+    [/^group$/, 'marks this element so group-* on its descendants can react to it'],
+    [/^peer$/, 'marks this element so peer-* on its siblings can react to it'],
+    [/^@container$/, 'marks this element as a container query context'],
+    [/^order-first$/, 'order: -9999 (renders first regardless of source position)'],
+    [/^order-last$/, 'order: 9999 (renders last regardless of source position)'],
+    [/^order-(\d+)$/, (n)=>`order: ${n} (visual position among flex/grid siblings)`],
+    [/^col-start-(\d+)$/, (n)=>`grid-column-start: ${n}`], [/^col-end-(\d+)$/, (n)=>`grid-column-end: ${n}`],
+    [/^row-start-(\d+)$/, (n)=>`grid-row-start: ${n}`], [/^row-end-(\d+)$/, (n)=>`grid-row-end: ${n}`],
+    [/^auto-cols-(auto|min|max|fr)$/, (v)=>`grid-auto-columns: ${v}`],
+    [/^auto-rows-(auto|min|max|fr)$/, (v)=>`grid-auto-rows: ${v}`],
+    [/^grid-rows-(\d+)$/, (n)=>`grid-template-rows: repeat(${n}, 1fr)`],
+    [/^columns-(\d+)$/, (n)=>`column-count: ${n} (newspaper-style text columns)`],
+    [/^font-(sans|serif|mono)$/, (v)=>`font-family: ${v} stack`],
+    [/^list-(disc|decimal|none)$/, (v)=>`list-style-type: ${v}`],
+    [/^list-(inside|outside)$/, (v)=>`list-style-position: ${v}`],
+    [/^whitespace-(normal|nowrap|pre|pre-line|pre-wrap|break-spaces)$/, (v)=>`white-space: ${v}`],
+    [/^text-balance$/, 'text-wrap: balance (evens out line lengths in headings)'],
+    [/^indent-(\d+)$/, (n)=>`text-indent: ${SPACING_REM(n)}`],
+    [/^text-shadow$/, 'text-shadow: default soft shadow'],
+    [/^text-shadow-(sm|md|lg|xl|none)$/, (v)=>`text-shadow: ${v} step`],
+    [/^mask-([tblr])-from-(\d+)%?$/, (side,n)=>`fades the ${({t:'top',b:'bottom',l:'left',r:'right'})[side]} edge starting at ${n}%`],
+    [/^mix-blend-(\w+)$/, (v)=>`mix-blend-mode: ${v}`],
+    [/^bg-blend-(\w+)$/, (v)=>`background-blend-mode: ${v}`],
+    [/^fill-none$/, 'fill: none'], [/^fill-(\w+)-(\d+)$/, (c,n)=>`SVG fill color: ${c}-${n}`],
+    [/^stroke-(\w+)-(\d+)$/, (c,n)=>`SVG stroke color: ${c}-${n}`], [/^stroke-(\d+)$/, (n)=>`stroke-width: ${n}px`],
+    [/^accent-(\w+)-(\d+)$/, (c,n)=>`accent-color (native form control color): ${c}-${n}`],
+    [/^caret-(\w+)-(\d+)$/, (c,n)=>`caret-color (text cursor color): ${c}-${n}`],
+    [/^resize$/, 'resize: both'], [/^resize-(none|x|y)$/, (v)=>`resize: ${v}`],
+    [/^snap-(x|y|both)$/, (v)=>`scroll-snap-type axis: ${v}`],
+    [/^snap-mandatory$/, 'scroll-snap-type strictness: mandatory'],
+    [/^snap-(start|center|end|align-none)$/, (v)=>`scroll-snap-align: ${v}`],
+    [/^touch-none$/, 'touch-action: none'],
+    [/^select-(none|all|text|auto)$/, (v)=>`user-select: ${v}`],
+    [/^pointer-events-(none|auto)$/, (v)=>`pointer-events: ${v}`],
+    [/^appearance-none$/, 'appearance: none (removes native form control styling)'],
+    [/^has-checked$/, 'true only when this element contains a checked control'],
+  ];
+  for(const [re, out] of rules){
+    const match = token.match(re);
+    if(match){ return {token: raw, meaning: typeof out === 'function' ? out(...match.slice(1)) : out, prefixText}; }
+  }
+  return {token: raw, meaning: 'utility class', prefixText};
+}
+
+/* ================= html helpers ================= */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function extractClasses(html){
+  const found = []; const re = /class="([^"]*)"/g; let m;
+  while((m = re.exec(html))){ found.push(...m[1].trim().split(/\s+/).filter(Boolean)); }
+  return found;
+}
+function highlightHTML(src){
+  let out = escapeHtml(src);
+  out = out.replace(/class=(&quot;)([^&]*?)(&quot;)/g, (full, q1, inner, q2) => {
+    const toks = inner.split(/(\s+)/).map(part => {
+      if(!part.trim()) return part;
+      const isMod = part.includes(':');
+      return `<span class="tk-cls${isMod?' mod':''}" data-cls="${part}">${part}</span>`;
+    }).join('');
+    return `class=${q1}${toks}${q2}`;
+  });
+  out = out.replace(/([a-zA-Z-]+)(=)(&quot;)/g, '<span class="tk-attr">$1</span>$2$3');
+  out = out.replace(/(&lt;\/?)([a-zA-Z0-9]+)/g, '<span class="tk-tag">$1$2</span>');
+  return out;
+}
+function renderPreview(html){
+  const frame = document.getElementById('preview-frame');
+  frame.srcdoc = `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"><\/script>
+  <style>body{font-family:Inter,system-ui,sans-serif; margin:0; padding:24px; min-height:100vh; display:flex; align-items:center; justify-content:center; background:
+    linear-gradient(#eef1f6 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg,#eef1f6 1px, transparent 1px) 0 0/24px 24px, #fafbfd;}</style>
+  </head><body>${html}</body></html>`;
+}
+
+const codeInput = document.getElementById('code-input');
+const codeHighlight = document.getElementById('code-highlight');
+function refreshEditor(html){ codeHighlight.innerHTML = highlightHTML(html); }
+codeInput.addEventListener('scroll', () => { codeHighlight.scrollTop = codeInput.scrollTop; codeHighlight.scrollLeft = codeInput.scrollLeft; });
+
+function renderBOM(html){
+  const body = document.getElementById('bom-body');
+  body.innerHTML = '';
+  const tokens = [...new Set(extractClasses(html))];
+  if(tokens.length === 0){ body.innerHTML = `<div class="bom-empty">No call-outs yet — add class="..." attributes in the specification.</div>`; return; }
+  tokens.forEach((t, i) => {
+    const d = decodeToken(t);
+    const isMod = t.includes(':');
+    const row = document.createElement('div');
+    row.className = 'bom-row';
+    row.dataset.cls = t;
+    row.innerHTML = `
+      <span class="bom-idx">${String(i+1).padStart(2,'0')}</span>
+      <span class="bom-cls${isMod?' mod':''}">${d.token}</span>
+      <span class="bom-meaning">${d.meaning}${d.prefixText ? ` <span class="tag">— ${d.prefixText}</span>` : ''}</span>
+    `;
+    row.addEventListener('mouseenter', () => setHighlight(t, true));
+    row.addEventListener('mouseleave', () => setHighlight(t, false));
+    body.appendChild(row);
+  });
+}
+function setHighlight(cls, on){
+  document.querySelectorAll(`.tk-cls[data-cls="${CSS.escape(cls)}"]`).forEach(el => el.classList.toggle('tk-hl', on));
+  document.querySelectorAll(`.bom-row[data-cls="${CSS.escape(cls)}"]`).forEach(el => el.classList.toggle('hl', on));
+}
+
+/* ================= lessons: basic to advanced, 9 chapters ================= */
+const LESSONS = [
+  { id:'padding-margin', chapter:'Foundations', scale:'1:1', category:'Box model', title:'Padding & margin',
+    brief:'Give the card breathing room: add 6 units of padding on all sides, and center the card horizontally with automatic side margins. The card should stay 20rem wide (w-80).',
+    starter:`<div class="w-80 bg-white border border-slate-200 rounded-lg shadow-sm">
+  <p class="font-semibold">Spec sheet</p>
+  <p class="text-slate-500 text-sm mt-1">This card needs room to breathe.</p>
+</div>`,
+    checks:[['p-6','p-8'],['mx-auto']],
+    hint:'Padding on all sides uses p-{n}. Auto side margins use mx-auto.' },
+
+  { id:'sizing', chapter:'Foundations', scale:'1:1', category:'Sizing', title:'Width, height & the size shorthand',
+    brief:'Make the avatar frame exactly 16 units on both axes using the size-* shorthand instead of separate width and height utilities.',
+    starter:`<div class="w-12 h-12 bg-teal-100 border border-teal-300 rounded-lg flex items-center justify-center text-xs font-mono text-teal-700">
+  IMG
+</div>`,
+    checks:[['size-16']],
+    hint:'size-{n} sets width and height together — replace w-12 h-12 with a single size-16.' },
+
+  { id:'min-max', chapter:'Foundations', scale:'1:2', category:'Sizing', title:'Min/max width constraints',
+    brief:'This paragraph should never get narrower than 20rem, and never wider than a large max-width step, so it stays readable at any screen size.',
+    starter:`<p class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-600">
+  Body copy that should keep a comfortable measure regardless of the viewport width.
+</p>`,
+    checks:[['min-w-80','min-w-[20rem]'],['max-w-md','max-w-lg','max-w-xl','max-w-[32rem]']],
+    hint:'min-w-{size} sets a floor, max-w-{size} sets a ceiling. Try min-w-80 and max-w-lg.' },
+
+  { id:'flex-row', chapter:'Flexbox & Grid', scale:'1:1', category:'Flexbox', title:'Row with space between',
+    brief:'Lay the three chips out in a row, spaced evenly apart, and vertically centered.',
+    starter:`<div class="w-full bg-white border border-slate-200 rounded-lg p-4">
+  <span class="px-3 py-1 rounded-full bg-teal-50 text-teal-600 text-xs font-mono">alpha</span>
+  <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-mono">beta</span>
+  <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-mono">gamma</span>
+</div>`,
+    checks:[['flex'],['justify-between'],['items-center']],
+    hint:'Add flex, justify-between, and items-center to the outer div.' },
+
+  { id:'flex-col-gap', chapter:'Flexbox & Grid', scale:'1:1', category:'Flexbox', title:'Stacked list with gap',
+    brief:'Stack the three rows vertically with a consistent gap between each — without a gap utility they touch, which looks cramped.',
+    starter:`<div class="w-full bg-white border border-slate-200 rounded-lg p-4">
+  <div class="bg-slate-100 rounded px-3 py-2 text-xs font-mono">01 · measure</div>
+  <div class="bg-slate-100 rounded px-3 py-2 text-xs font-mono">02 · cut</div>
+  <div class="bg-slate-100 rounded px-3 py-2 text-xs font-mono">03 · assemble</div>
+</div>`,
+    checks:[['flex-col'],['gap-3','gap-2','gap-4']],
+    hint:'flex-direction is flex-col (needs flex too). Spacing between children is gap-{n}.' },
+
+  { id:'grid-basic', chapter:'Flexbox & Grid', scale:'1:2', category:'Grid', title:'Three-column grid',
+    brief:'Arrange the six swatches into a 3-column grid with a small gap, so they form two neat rows.',
+    starter:`<div class="w-full bg-white border border-slate-200 rounded-lg p-4">
+  <div class="h-12 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-12 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-12 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-12 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-12 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-12 rounded bg-teal-100 border border-teal-300"></div>
+</div>`,
+    checks:[['grid'],['grid-cols-3'],['gap-2','gap-3','gap-4']],
+    hint:'Set display with grid, columns with grid-cols-{n}, and gap-{n} for spacing.' },
+
+  { id:'grid-placement', chapter:'Flexbox & Grid', scale:'1:2', category:'Grid', title:'Spans & placement',
+    brief:'Make the first tile span two columns so it reads as featured, and center every tile in its cell using place-items.',
+    starter:`<div class="grid grid-cols-3 gap-2 bg-white border border-slate-200 rounded-lg p-4">
+  <div class="h-16 rounded bg-teal-100 border border-teal-300 flex items-center justify-center text-xs font-mono">featured</div>
+  <div class="h-16 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-16 rounded bg-teal-100 border border-teal-300"></div>
+  <div class="h-16 rounded bg-teal-100 border border-teal-300"></div>
+</div>`,
+    checks:[['col-span-2'],['place-items-center']],
+    hint:'Add col-span-2 to the first tile, and place-items-center to the grid container.' },
+
+  { id:'typography', chapter:'Typography', scale:'1:1', category:'Typography', title:'Heading hierarchy',
+    brief:'Make the heading large and bold (text-xl, font-bold), and make the caption beneath it small and muted (text-xs, text-slate-400).',
+    starter:`<div class="w-full">
+  <p>Station report</p>
+  <p class="mt-1">Filed at 14:02, bench 3</p>
+</div>`,
+    checks:[['text-xl'],['font-bold','font-semibold'],['text-xs'],['text-slate-400','text-slate-500','text-gray-400']],
+    hint:'Add text-xl font-bold to the first <p>, and text-xs text-slate-400 to the second.' },
+
+  { id:'truncate', chapter:'Typography', scale:'1:2', category:'Typography', title:'Truncation & line-clamp',
+    brief:'The title should truncate to a single line with an ellipsis, and the description below it should clamp to exactly 2 lines.',
+    starter:`<div class="w-56 bg-white border border-slate-200 rounded-lg p-4">
+  <p class="font-semibold">A station title so long it will definitely overflow the card</p>
+  <p class="text-sm text-slate-500 mt-1">A much longer description that goes on for several sentences and should be clipped after two lines so the card height stays predictable no matter what.</p>
+</div>`,
+    checks:[['truncate'],['line-clamp-2']],
+    hint:'truncate clips to one line with an ellipsis. line-clamp-{n} clips to a fixed number of lines.' },
+
+  { id:'text-decoration', chapter:'Typography', scale:'1:2', category:'Typography', title:'Tracking & decoration',
+    brief:'Give the eyebrow label wide letter-spacing (tracking-widest), and underline the link below it.',
+    starter:`<div class="w-full">
+  <p class="text-xs text-slate-400">station notes</p>
+  <a href="#" class="text-teal-600 text-sm">Read the full specification</a>
+</div>`,
+    checks:[['tracking-widest','tracking-wider'],['underline']],
+    hint:'tracking-{step} adjusts letter-spacing. underline adds a text-decoration line.' },
+
+  { id:'font-list', chapter:'Typography', scale:'1:2', category:'Typography', title:'Font family & lists',
+    brief:'Set the code-style pull-quote to the monospace font family, and turn the list below it into a bulleted list.',
+    starter:`<div class="w-full">
+  <p class="text-sm">"Ship the spec, not the guess."</p>
+  <ul class="text-sm text-slate-600 mt-2">
+    <li>Measure twice</li>
+    <li>Cut once</li>
+  </ul>
+</div>`,
+    checks:[['font-mono'],['list-disc']],
+    hint:'font-mono switches the font family. list-disc adds bullet markers — pair it with list-inside to keep them tucked against the text.' },
+
+  { id:'colors', chapter:'Color & Borders', scale:'1:1', category:'Color', title:'Background & text pairing',
+    brief:'Give the banner a solid rose-600 background and white text, so it reads as a clear warning banner.',
+    starter:`<div class="w-full rounded-lg p-4 text-center font-semibold">
+  Bench 4 is offline for maintenance
+</div>`,
+    checks:[['bg-rose-600','bg-red-600'],['text-white']],
+    hint:'Background color is bg-{color}-{shade}; shades run 50 (light) to 900 (dark). Pair it with text-white.' },
+
+  { id:'borders-rings', chapter:'Color & Borders', scale:'1:2', category:'Borders', title:'Borders & focus rings',
+    brief:'Give the input a visible slate border by default, and a 2-unit teal ring when it is focused — tab to it or click inside to test.',
+    starter:`<input type="text" placeholder="Station ID" class="w-full rounded-md px-3 py-2 text-sm outline-none" />`,
+    checks:[['border','border-slate-300'],['focus:ring-2'],['focus:ring-teal-500','focus:ring-teal-400']],
+    hint:'Add border border-slate-300 for the default state, then focus:ring-2 focus:ring-teal-500 for focus.' },
+
+  { id:'gradients', chapter:'Color & Borders', scale:'1:4', category:'Color', title:'Gradient backgrounds',
+    brief:'Fill the banner with a left-to-right gradient that moves from teal to blue.',
+    starter:`<div class="w-full h-20 rounded-lg"></div>`,
+    checks:[['bg-gradient-to-r'],['from-teal-500','from-teal-400'],['to-blue-500','to-blue-600']],
+    hint:'bg-gradient-to-r sets the direction. from-{color} and to-{color} set the stops — add via-{color} for a middle stop.' },
+
+  { id:'hover-focus', chapter:'Interactivity Basics', scale:'1:1', category:'Interactivity', title:'Hover & focus states',
+    brief:'The button should darken on hover and show a visible ring on focus — required for keyboard accessibility. Click into the output and tab to it to test focus.',
+    starter:`<button class="px-4 py-2 rounded-md bg-teal-500 text-white font-semibold">
+  Run diagnostics
+</button>`,
+    checks:[['hover:bg-teal-600','hover:bg-teal-700'],['focus:ring-2','focus:outline']],
+    hint:'State prefixes attach to any utility: hover:bg-teal-600, focus:ring-2.' },
+
+  { id:'responsive', chapter:'Responsive Design', scale:'1:2', category:'Responsive', title:'Stack on mobile, row on desktop',
+    brief:'The two panels should stack vertically by default, but sit side-by-side from the md breakpoint upward. Resize your browser window to test it.',
+    starter:`<div class="w-full gap-3 bg-white border border-slate-200 rounded-lg p-4">
+  <div class="flex-1 h-16 rounded bg-teal-50 border border-teal-300 flex items-center justify-center text-xs font-mono">panel A</div>
+  <div class="flex-1 h-16 rounded bg-amber-50 border border-amber-300 flex items-center justify-center text-xs font-mono">panel B</div>
+</div>`,
+    checks:[['flex'],['flex-col'],['md:flex-row']],
+    hint:'Start mobile-first with flex flex-col, then override at a breakpoint: md:flex-row.' },
+
+  { id:'shadows-opacity', chapter:'Visual Effects', scale:'1:2', category:'Effects', title:'Shadows & opacity',
+    brief:'Lift the card off the page with a large shadow, and dim the "draft" badge in the corner to 50% opacity.',
+    starter:`<div class="w-full bg-white border border-slate-200 rounded-lg p-4 relative">
+  <span class="absolute top-2 right-2 text-xs bg-slate-800 text-white px-2 py-0.5 rounded">draft</span>
+  <p class="font-semibold">Panel spec</p>
+</div>`,
+    checks:[['shadow-lg','shadow-xl'],['opacity-50']],
+    hint:'shadow-{size} controls elevation. opacity-{n} fades an element — apply it to the badge span.' },
+
+  { id:'position-inset', chapter:'Position & Overflow', scale:'1:2', category:'Position', title:'Position & inset',
+    brief:'Pin the status dot to the top-right corner of the avatar, overlapping the edge slightly.',
+    starter:`<div class="relative w-14 h-14 rounded-full bg-slate-200">
+  <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white"></span>
+</div>`,
+    checks:[['absolute'],['top-0','-top-0.5','top-1'],['right-0','-right-0.5','right-1']],
+    hint:'The badge needs absolute positioning plus top-0 right-0 (the parent already has relative).' },
+
+  { id:'overflow-aspect', chapter:'Position & Overflow', scale:'1:4', category:'Layout', title:'Overflow, aspect-ratio & object-fit',
+    brief:'Constrain the media block to a 16:9 aspect ratio, clip anything that overflows its rounded corners, and make the image fill the frame without distorting.',
+    starter:`<div class="w-full rounded-lg">
+  <img src="https://placehold.co/640x360" class="w-full h-full" />
+</div>`,
+    checks:[['aspect-video','aspect-[16/9]'],['overflow-hidden'],['object-cover']],
+    hint:'aspect-video locks the 16:9 ratio. overflow-hidden clips it. object-cover on the image fills without stretching.' },
+
+  { id:'transitions', chapter:'Motion', scale:'1:2', category:'Motion', title:'Transitions & duration',
+    brief:'The button should smoothly animate its background color over 300ms whenever it changes state, instead of snapping instantly.',
+    starter:`<button class="px-4 py-2 rounded-md bg-teal-500 hover:bg-teal-700 text-white font-semibold">
+  Save specification
+</button>`,
+    checks:[['transition','transition-colors'],['duration-300']],
+    hint:'transition (or transition-colors) opts an element into animating its property changes. duration-{ms} sets how long.' },
+
+  { id:'animation', chapter:'Motion', scale:'1:4', category:'Motion', title:'Built-in animation utilities',
+    brief:'Show that the station is actively processing: make the small dot pulse continuously, and the ring around it spin.',
+    starter:`<div class="flex items-center gap-3">
+  <div class="w-3 h-3 rounded-full bg-teal-500"></div>
+  <div class="w-6 h-6 rounded-full border-2 border-teal-300 border-t-teal-600"></div>
+  <span class="text-sm text-slate-500">processing…</span>
+</div>`,
+    checks:[['animate-pulse'],['animate-spin']],
+    hint:'animate-pulse fades an element in and out on a loop. animate-spin rotates it continuously — good for a loading ring.' },
+
+  { id:'group-peer', chapter:'States & Interactivity, Advanced', scale:'1:4', category:'Interactivity', title:'Group-hover states',
+    brief:'Hovering anywhere on the card should reveal the hidden "view details" label — with no JavaScript. Use group and group-hover.',
+    starter:`<div class="w-full bg-white border border-slate-200 rounded-lg p-4">
+  <p class="font-semibold">Bench 6</p>
+  <span class="text-xs text-teal-600 opacity-0">view details</span>
+</div>`,
+    checks:[['group'],['group-hover:opacity-100']],
+    hint:'Add group to the outer card. The label already has opacity-0 — add group-hover:opacity-100 to reveal it on hover.' },
+
+  { id:'state-selectors', chapter:'States & Interactivity, Advanced', scale:'1:4', category:'Interactivity', title:'Structural & form states',
+    brief:'Tint alternating rows using odd/even selectors, and dim the disabled button so it visibly reads as unavailable.',
+    starter:`<div class="w-full">
+  <div class="px-3 py-2 text-sm bg-white">row one</div>
+  <div class="px-3 py-2 text-sm bg-white">row two</div>
+  <div class="px-3 py-2 text-sm bg-white">row three</div>
+  <button disabled class="mt-3 px-4 py-2 rounded-md bg-teal-500 text-white text-sm">Locked</button>
+</div>`,
+    checks:[['odd:bg-slate-50','even:bg-slate-50'],['disabled:opacity-50']],
+    hint:'even:bg-slate-50 (or odd:) tints alternating rows. disabled:opacity-50 dims an element only while disabled.' },
+
+  { id:'order', chapter:'Layout, Advanced', scale:'1:4', category:'Flexbox', title:'Reordering with order',
+    brief:'Visually move the "Priority" item to the front of the row without touching its position in the HTML.',
+    starter:`<div class="flex gap-2 w-full">
+  <div class="flex-1 h-12 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-mono">A</div>
+  <div class="flex-1 h-12 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-mono">B</div>
+  <div class="flex-1 h-12 rounded bg-teal-100 border border-teal-400 flex items-center justify-center text-xs font-mono">Priority</div>
+</div>`,
+    checks:[['order-first','-order-1']],
+    hint:'order-first sets a very low order value so an element renders before its siblings, regardless of where it sits in the markup.' },
+
+  { id:'grid-lines', chapter:'Layout, Advanced', scale:'1:4', category:'Grid', title:'Precise column placement',
+    brief:'Place the highlighted tile so it starts at column line 2 and ends at column line 4 — independent of where it sits in the source order.',
+    starter:`<div class="grid grid-cols-4 gap-2 w-full">
+  <div class="h-12 rounded bg-slate-100 border border-slate-300"></div>
+  <div class="h-12 rounded bg-teal-100 border border-teal-400"></div>
+  <div class="h-12 rounded bg-slate-100 border border-slate-300"></div>
+  <div class="h-12 rounded bg-slate-100 border border-slate-300"></div>
+</div>`,
+    checks:[['col-start-2'],['col-end-4']],
+    hint:'col-start-{n} and col-end-{n} place an item precisely by grid line, independent of source order. Apply both to the teal tile.' },
+
+  { id:'columns', chapter:'Layout, Advanced', scale:'1:4', category:'Layout', title:'Multi-column text',
+    brief:'Flow this paragraph into 2 newspaper-style columns with a visible gap between them.',
+    starter:`<p class="text-sm text-slate-600 w-full">Tailwind's utility classes cover far more than flexbox and grid — multi-column text layout has been part of CSS for years, and Tailwind exposes it directly so long-form copy can flow the way a newspaper or magazine column does, without any extra markup.</p>`,
+    checks:[['columns-2'],['gap-6','gap-8','gap-4']],
+    hint:'columns-{n} flows content into n CSS columns. gap-{n} controls the space between them.' },
+
+  { id:'container-query', chapter:'Layout, Advanced', scale:'1:8', category:'Responsive', title:'Container queries',
+    brief:'Make this card respond to its own container\'s width instead of the viewport: mark the wrapper as a query container, then switch the inner layout to a row once the container itself is at least the sm size.',
+    starter:`<div class="w-full border border-slate-200 rounded-lg p-4">
+  <div class="flex flex-col gap-3">
+    <div class="flex-1 h-16 rounded bg-teal-50 border border-teal-300"></div>
+    <div class="flex-1 h-16 rounded bg-amber-50 border border-amber-300"></div>
+  </div>
+</div>`,
+    checks:[['@container'],['@sm:flex-row']],
+    hint:'@container marks an element as a query container. @sm:flex-row (and other @-prefixed steps) respond to that container\'s width, not the browser viewport.' },
+
+  { id:'whitespace-balance', chapter:'Typography, Extended', scale:'1:4', category:'Typography', title:'Whitespace & text-balance',
+    brief:'Balance the heading so it doesn\'t leave an awkward single word on its own line, and make the code snippet below preserve its exact spacing and line breaks.',
+    starter:`<div class="w-64">
+  <h3 class="font-semibold">A heading that might wrap awkwardly across two lines</h3>
+  <pre class="text-xs bg-slate-100 rounded p-2 mt-2">function run() {
+  return true;
+}</pre>
+</div>`,
+    checks:[['text-balance'],['whitespace-pre','whitespace-pre-wrap']],
+    hint:'text-balance evens out line lengths in headings. whitespace-pre preserves exact spacing and line breaks — useful for code.' },
+
+  { id:'text-shadow', chapter:'Typography, Extended', scale:'1:4', category:'Typography', title:'Text-shadow',
+    brief:'Give the hero label a soft text-shadow so it lifts off the busy gradient behind it.',
+    starter:`<div class="w-full h-24 rounded-lg bg-gradient-to-br from-indigo-500 to-teal-400 flex items-center justify-center">
+  <span class="text-white text-xl font-bold">Bench 7</span>
+</div>`,
+    checks:[['text-shadow-sm','text-shadow','text-shadow-md','text-shadow-lg']],
+    hint:'text-shadow (or text-shadow-{size}) applies a soft drop shadow behind text — handy for text sitting on photos or gradients.' },
+
+  { id:'filters', chapter:'Visual Effects, Advanced', scale:'1:4', category:'Effects', title:'Filters — blur, grayscale, brightness',
+    brief:'This thumbnail is still loading: blur it, desaturate it fully with grayscale, and dim it slightly with a lower brightness.',
+    starter:`<div class="w-40 h-28 rounded-lg bg-gradient-to-br from-amber-300 to-rose-400"></div>`,
+    checks:[['blur-sm','blur','blur-md'],['grayscale'],['brightness-75','brightness-90','brightness-50']],
+    hint:'Stack filters on one element: blur-sm grayscale brightness-75.' },
+
+  { id:'backdrop-blur', chapter:'Visual Effects, Advanced', scale:'1:4', category:'Effects', title:'Glass panel with backdrop-blur',
+    brief:'Turn the overlay into frosted glass: a translucent white background plus a backdrop blur, so the gradient behind it shows through softly.',
+    starter:`<div class="relative w-full h-32 rounded-lg overflow-hidden bg-gradient-to-br from-indigo-500 to-teal-400">
+  <div class="absolute inset-x-4 bottom-4 rounded-lg p-3">
+    <p class="text-sm font-semibold">Frosted overlay</p>
+  </div>
+</div>`,
+    checks:[['bg-white/30','bg-white/20','bg-white/40'],['backdrop-blur','backdrop-blur-sm','backdrop-blur-md']],
+    hint:'bg-white/30 gives a translucent white fill (the /30 is opacity). backdrop-blur blurs whatever sits behind it.' },
+
+  { id:'svg-paint', chapter:'Visual Effects, Advanced', scale:'1:4', category:'Effects', title:'SVG fill & stroke',
+    brief:'Color this icon\'s fill teal, and give its stroke a 2px width in a darker teal.',
+    starter:`<svg class="w-10 h-10" viewBox="0 0 24 24" fill="none">
+  <circle cx="12" cy="12" r="9" />
+</svg>`,
+    checks:[['fill-teal-400','fill-teal-500'],['stroke-teal-700','stroke-teal-600'],['stroke-2']],
+    hint:'fill-{color} and stroke-{color} target SVG paint properties directly. stroke-{n} sets the stroke width.' },
+
+  { id:'mask', chapter:'Visual Effects, Advanced', scale:'1:8', category:'Effects', title:'Mask fades',
+    brief:'Fade the bottom edge of this swatch out to transparent using a mask, so it blends into the card instead of ending abruptly.',
+    starter:`<div class="w-full h-32 rounded-lg overflow-hidden">
+  <div class="w-full h-full bg-gradient-to-br from-amber-300 to-rose-400"></div>
+</div>`,
+    checks:[['mask-b-from-50%','mask-b-from-0%','mask-b-from-60%']],
+    hint:'mask-b-from-{pct} fades the bottom edge starting at that percentage — a newer utility for soft edge fades without an image editor.' },
+
+  { id:'blend', chapter:'Visual Effects, Advanced', scale:'1:8', category:'Effects', title:'Blend modes',
+    brief:'Blend the teal overlay into the gradient underneath using multiply, so the tint reacts with what\'s beneath it instead of sitting flatly on top.',
+    starter:`<div class="relative w-full h-28 rounded-lg overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-600"></div>
+  <div class="absolute inset-0 bg-teal-500"></div>
+</div>`,
+    checks:[['mix-blend-multiply','mix-blend-overlay']],
+    hint:'mix-blend-{mode} on an element blends it with whatever sits behind it, like a blend mode in a design tool.' },
+
+  { id:'accent-caret', chapter:'Forms & Interactivity', scale:'1:2', category:'Forms', title:'Accent & caret color',
+    brief:'Make the checkbox\'s check color teal instead of the browser default, and make the text input\'s blinking caret teal too.',
+    starter:`<div class="flex flex-col gap-2 w-full">
+  <input type="checkbox" checked />
+  <input type="text" placeholder="Type here" class="border border-slate-300 rounded px-2 py-1 text-sm" />
+</div>`,
+    checks:[['accent-teal-500','accent-teal-600'],['caret-teal-500','caret-teal-600']],
+    hint:'accent-{color} recolors native checkboxes, radios and range inputs. caret-{color} recolors the text cursor.' },
+
+  { id:'resize-snap', chapter:'Forms & Interactivity', scale:'1:4', category:'Forms', title:'Resize & scroll-snap',
+    brief:'Stop the textarea from being resizable, and make the horizontal card row snap along its x-axis as the user scrolls.',
+    starter:`<div class="w-full">
+  <textarea class="w-full border border-slate-300 rounded p-2 text-sm" rows="2"></textarea>
+  <div class="flex gap-3 overflow-x-auto mt-3">
+    <div class="w-32 h-16 shrink-0 rounded bg-teal-100 border border-teal-300"></div>
+    <div class="w-32 h-16 shrink-0 rounded bg-amber-100 border border-amber-300"></div>
+    <div class="w-32 h-16 shrink-0 rounded bg-rose-100 border border-rose-300"></div>
+  </div>
+</div>`,
+    checks:[['resize-none'],['snap-x']],
+    hint:'resize-none locks a textarea\'s size. snap-x (paired with snap-mandatory on the row and snap-center on each card) turns scrolling into a snapping carousel.' },
+
+  { id:'touch-select', chapter:'Forms & Interactivity', scale:'1:4', category:'Forms', title:'Select & pointer-events',
+    brief:'Prevent this watermark from being selectable or clickable, so it never interferes with the content underneath it.',
+    starter:`<div class="relative w-full h-24 bg-slate-100 rounded-lg">
+  <span class="absolute inset-0 flex items-center justify-center text-slate-300 font-bold text-2xl">DRAFT</span>
+</div>`,
+    checks:[['select-none'],['pointer-events-none']],
+    hint:'select-none stops text selection. pointer-events-none lets clicks pass straight through an element to whatever sits beneath it.' },
+
+  { id:'focus-within-visible', chapter:'Advanced States', scale:'1:8', category:'Interactivity', title:'focus-within & focus-visible',
+    brief:'Highlight the whole form group with a ring when any field inside it is focused, and give the button a focus ring that only appears for keyboard focus, not a mouse click.',
+    starter:`<div class="w-full border border-slate-200 rounded-lg p-3">
+  <input type="text" placeholder="Name" class="w-full text-sm outline-none border-b border-slate-200 pb-1" />
+</div>
+<button class="mt-3 px-4 py-2 rounded-md bg-teal-500 text-white text-sm outline-none">Submit</button>`,
+    checks:[['focus-within:ring-2'],['focus-visible:ring-2']],
+    hint:'focus-within: applies to a parent when any descendant is focused. focus-visible: applies only for keyboard focus, not a mouse click.' },
+
+  { id:'has-not', chapter:'Advanced States', scale:'1:8', category:'Interactivity', title:'has-* & last:',
+    brief:'Give the card a teal border only while its checkbox is checked, and remove the bottom border from the final row in the list.',
+    starter:`<div class="w-full border border-slate-200 rounded-lg p-3">
+  <input type="checkbox" />
+</div>
+<div class="w-full mt-3">
+  <div class="border-b border-slate-200 py-2 text-sm">row one</div>
+  <div class="border-b border-slate-200 py-2 text-sm">row two</div>
+</div>`,
+    checks:[['has-checked:border-teal-500','has-[:checked]:border-teal-500'],['last:border-b-0']],
+    hint:'has-checked:border-teal-500 styles an element based on what\'s inside it. last:border-b-0 removes the border only from the final child.' },
+
+  { id:'aria-print-motion', chapter:'Advanced States', scale:'1:8', category:'Interactivity', title:'aria-*, print: & motion variants',
+    brief:'Tint the selected tab teal using its aria-selected attribute, hide the "internal use" note when printing, and disable an element\'s transition for anyone who prefers reduced motion.',
+    starter:`<div class="flex gap-2">
+  <button aria-selected="true" class="px-3 py-1 rounded text-sm">Overview</button>
+  <button class="px-3 py-1 rounded text-sm">Details</button>
+</div>
+<p class="text-xs text-slate-400 mt-2">internal use only</p>
+<div class="mt-2 w-8 h-8 rounded bg-teal-500 transition"></div>`,
+    checks:[['aria-selected:bg-teal-100','aria-selected:bg-teal-50'],['print:hidden'],['motion-reduce:transition-none']],
+    hint:'aria-selected: reacts to the aria-selected attribute. print:hidden only applies when printing. motion-reduce:transition-none respects the OS-level reduced-motion setting.' },
+
+  { id:'ref-palette', chapter:'Reference & Escape Hatches', scale:'—', category:'Reference', title:'The full color palette', reference:true,
+    brief:'Tailwind ships roughly 22 color families (slate, gray, zinc, neutral, stone, red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose), each with shades from 50 through 950. This sheet is for browsing, not grading — swap the family or shade below and watch the swatch update.',
+    starter:`<div class="w-24 h-24 rounded-lg bg-teal-500"></div>`,
+    checks:[],
+    hint:'Try bg-indigo-600, bg-rose-300, or bg-emerald-800 — any family plus any shade from 50–950 works the same way.' },
+
+  { id:'arbitrary', chapter:'Reference & Escape Hatches', scale:'1:8', category:'Advanced', title:'Arbitrary values',
+    brief:'Give this swatch an exact custom width of 137px and a precise brand color — no class on Tailwind\'s default scale matches either exactly.',
+    starter:`<div class="h-16 rounded-lg"></div>`,
+    checks:[['w-[137px]'],['bg-[#4f46e5]','bg-[#4F46E5]']],
+    hint:'Square brackets accept any raw CSS value: w-[137px] for an exact size, bg-[#4f46e5] for an exact color.' },
+
+  { id:'ref-config', chapter:'Reference & Escape Hatches', scale:'—', category:'Reference', title:'CSS-first config & @apply', reference:true,
+    brief:'Modern Tailwind (v4) is configured in CSS, not a JS file: @theme defines your design tokens as CSS custom properties, and @apply still lets you fold a set of utilities into one semantic class name. This sheet is for reading — nothing to check here.',
+    starter:`<pre class="text-xs bg-slate-900 text-teal-300 rounded-lg p-4 overflow-auto">@theme {
+  --color-brand: #4f46e5;
+  --spacing-18: 4.5rem;
+}
+
+.btn-primary {
+  @apply px-4 py-2 rounded-md bg-brand text-white font-semibold;
+}</pre>`,
+    checks:[],
+    hint:'@theme replaces the old tailwind.config.js with CSS custom properties. @apply is still there for pulling repeated utility combinations into a semantic class name.' },
+];
+
+
+
+/* ================= chapters ================= */
+function buildChapters(){
+  const map = new Map();
+  LESSONS.forEach((l, i) => {
+    if(!map.has(l.chapter)) map.set(l.chapter, []);
+    map.get(l.chapter).push(i);
+  });
+  return Array.from(map.entries()).map(([name, indices]) => ({name, indices}));
+}
+const CHAPTERS = buildChapters();
+
+const TIER_INFO = [
+  { name:'Essential', desc:'used in nearly every project', color:'#5AA9E6' },
+  { name:'Common', desc:'reached for regularly', color:'#E3A64F' },
+  { name:'Advanced', desc:'intermediate-plus patterns', color:'#B69AE8' },
+  { name:'Rare & Reference', desc:'edge cases and lookup material', color:'#566178' },
+];
+const TIER_MAP = {
+  'Foundations':0, 'Flexbox & Grid':0, 'Typography':0, 'Color & Borders':0, 'Interactivity Basics':0, 'Responsive Design':0,
+  'Visual Effects':1, 'Position & Overflow':1, 'Motion':1,
+  'States & Interactivity, Advanced':2, 'Layout, Advanced':2, 'Typography, Extended':2, 'Visual Effects, Advanced':2, 'Forms & Interactivity':2,
+  'Advanced States':3, 'Reference & Escape Hatches':3,
+};
+function tierOf(chapterName){ return TIER_MAP[chapterName] ?? 2; }
+
+/* ================= state ================= */
+let currentIndex = -1;
+const completed = new Set();
+
+async function loadProgress(){
+  try{
+    const res = await window.storage.get('utility-bench-progress');
+    if(res && res.value){ JSON.parse(res.value).forEach(id => completed.add(id)); }
+  }catch(e){ /* no saved progress yet */ }
+  updateProgressUI();
+  renderCover();
+}
+async function saveProgress(){
+  try{ await window.storage.set('utility-bench-progress', JSON.stringify(Array.from(completed))); }
+  catch(e){ /* best effort */ }
+}
+
+function updateProgressUI(){
+  document.getElementById('progress-label').textContent = `${completed.size} / ${LESSONS.length}`;
+  document.getElementById('sheet-count').textContent = `01–${String(LESSONS.length).padStart(2,'0')}`;
+  const ticks = document.getElementById('ruler-ticks');
+  ticks.innerHTML = '';
+  LESSONS.forEach(l => {
+    const t = document.createElement('span');
+    t.className = 'tick' + (completed.has(l.id) ? ' on' : '');
+    ticks.appendChild(t);
+  });
+  if(currentIndex >= 0) renderSheetIndex();
+  if(completed.size === LESSONS.length){
+    document.getElementById('stamp').style.display = 'flex';
+  }
+}
+
+function renderCover(){
+  const container = document.getElementById('learning-path');
+  container.innerHTML = '';
+  const firstIncomplete = LESSONS.findIndex(l => !completed.has(l.id));
+  const currentChapterName = firstIncomplete === -1 ? null : LESSONS[firstIncomplete].chapter;
+  let cardCounter = 0;
+
+  TIER_INFO.forEach((tier, tierIdx) => {
+    const chaptersInTier = CHAPTERS.map((ch, ci) => ({...ch, ci})).filter(ch => tierOf(ch.name) === tierIdx);
+    if(chaptersInTier.length === 0) return;
+
+    const totalInTier = chaptersInTier.reduce((s,ch) => s + ch.indices.length, 0);
+    const doneInTier = chaptersInTier.reduce((s,ch) => s + ch.indices.filter(i => completed.has(LESSONS[i].id)).length, 0);
+
+    const section = document.createElement('div');
+    section.className = 'tier-section';
+    section.style.setProperty('--tier-color', tier.color);
+    section.innerHTML = `
+      <div class="tier-head">
+        <span class="tier-badge">Tier ${tierIdx+1}</span>
+        <h2 class="tier-name f-display">${tier.name}</h2>
+        <span class="tier-desc">${tier.desc} · ${doneInTier}/${totalInTier} verified</span>
+      </div>
+      <div class="path"></div>
+    `;
+    const path = section.querySelector('.path');
+
+    chaptersInTier.forEach(ch => {
+      const done = ch.indices.filter(i => completed.has(LESSONS[i].id)).length;
+      const status = done === ch.indices.length ? 'done' : (ch.name === currentChapterName ? 'current' : 'todo');
+      const scales = ch.indices.map(i => LESSONS[i].scale);
+      const scaleLabel = scales[0] === scales[scales.length-1] ? scales[0] : `${scales[0]} – ${scales[scales.length-1]}`;
+      const pct = Math.round((done / ch.indices.length) * 100);
+
+      const card = document.createElement('button');
+      card.className = 'panel chapter-card';
+      card.dataset.status = status;
+      card.style.setProperty('--mx', '50%');
+      card.style.setProperty('--my', '50%');
+      card.style.animationDelay = `${Math.min(cardCounter * 0.03, 0.4)}s`;
+      cardCounter++;
+      card.innerHTML = `
+        <div class="chapter-top">
+          <span class="chapter-num">CH.${String(ch.ci+1).padStart(2,'0')}</span>
+          <div class="chapter-ring${done===ch.indices.length?' done':''}" style="--pct:${pct}"><span>${done}/${ch.indices.length}</span></div>
+        </div>
+        <h3 class="chapter-name f-display">${ch.name}</h3>
+        <p class="chapter-sheets">${ch.indices.length} sheet${ch.indices.length>1?'s':''}</p>
+        <div class="chapter-meta">
+          <span class="chapter-scale">scale ${scaleLabel}</span>
+          <span class="chapter-cta">Open →</span>
+        </div>
+      `;
+      card.addEventListener('click', () => showWorkspace(ch.indices[0]));
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        card.style.setProperty('--my', `${e.clientY - r.top}px`);
+      });
+      path.appendChild(card);
+    });
+
+    container.appendChild(section);
+  });
+
+  const resumeBtn = document.getElementById('resume-btn');
+  if(completed.size > 0 && firstIncomplete !== -1){
+    resumeBtn.style.display = 'inline-block';
+    document.getElementById('resume-num').textContent = 'S' + String(firstIncomplete+1).padStart(2,'0');
+    resumeBtn.onclick = () => showWorkspace(firstIncomplete);
+  } else {
+    resumeBtn.style.display = 'none';
+  }
+}
+
+function renderSheetIndex(){
+  const nav = document.getElementById('sheet-index');
+  nav.innerHTML = '';
+  CHAPTERS.forEach(ch => {
+    const done = ch.indices.filter(i => completed.has(LESSONS[i].id)).length;
+    const head = document.createElement('div');
+    head.className = 'chapter-head';
+    head.innerHTML = `<span class="chapter-head-name">${ch.name}</span><span class="chapter-head-count">${done}/${ch.indices.length}</span>`;
+    nav.appendChild(head);
+    ch.indices.forEach(i => {
+      const l = LESSONS[i];
+      const isActive = i === currentIndex;
+      const isDone = completed.has(l.id);
+      const btn = document.createElement('button');
+      btn.className = 'sheet-row' + (isActive ? ' active' : '');
+      btn.innerHTML = `
+        <span class="sheet-num f-mono">S${String(i+1).padStart(2,'0')}</span>
+        <span class="sheet-status${isDone?' done':''}"></span>
+        <span class="sheet-labels"><span class="sheet-title">${l.title}</span></span>
+      `;
+      btn.addEventListener('click', () => loadLesson(i));
+      nav.appendChild(btn);
+    });
+  });
+}
+
+function showWorkspace(index){
+  document.getElementById('cover').style.display = 'none';
+  document.getElementById('workspace').style.display = 'block';
+  loadLesson(index);
+}
+function showCover(){
+  document.getElementById('workspace').style.display = 'none';
+  document.getElementById('cover').style.display = 'block';
+  currentIndex = -1;
+  renderCover();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function loadLesson(i){
+  currentIndex = i;
+  const l = LESSONS[i];
+  const chIndices = CHAPTERS.find(c => c.name === l.chapter).indices;
+  const chDone = chIndices.filter(idx => completed.has(LESSONS[idx].id)).length;
+  const posInChapter = chIndices.indexOf(i) + 1;
+
+  document.getElementById('breadcrumb').innerHTML = `<span>${l.chapter}</span><span class="sep">/</span><span class="current">Sheet ${posInChapter} of ${chIndices.length}</span>`;
+  document.getElementById('lesson-eyebrow').textContent = `${l.category} · Sheet S${String(i+1).padStart(2,'0')} of ${LESSONS.length}`;
+  document.getElementById('lesson-title').textContent = l.title;
+  document.getElementById('chapter-progress-fill').style.width = `${Math.round((chDone/chIndices.length)*100)}%`;
+  document.getElementById('lesson-brief').textContent = l.brief;
+  document.getElementById('tb-sheet').textContent = `S${String(i+1).padStart(2,'0')} / ${String(LESSONS.length).padStart(2,'0')}`;
+  document.getElementById('tb-chapter').textContent = l.chapter;
+  document.getElementById('tb-discipline').textContent = l.category;
+  document.getElementById('tb-scale').textContent = l.scale;
+  document.getElementById('tb-status').textContent = completed.has(l.id) ? 'Verified' : 'Draft';
+
+  codeInput.value = l.starter;
+  document.getElementById('check-result').textContent = '';
+  refreshEditor(l.starter);
+  renderPreview(l.starter);
+  renderBOM(l.starter);
+  renderSheetIndex();
+
+  document.getElementById('check-btn').textContent = l.reference ? 'Mark as read' : 'Check';
+  document.querySelector('.brief-panel .label').textContent = l.reference ? 'Reference note' : 'Specification note';
+
+  document.getElementById('prev-btn').disabled = i === 0;
+  document.getElementById('prev-btn').style.opacity = i === 0 ? .4 : 1;
+  document.getElementById('next-btn').textContent = i === LESSONS.length - 1 ? 'Back to index →' : 'Next sheet →';
+
+  const wrap = document.getElementById('lesson-content');
+  wrap.classList.remove('sheet-in'); void wrap.offsetWidth; wrap.classList.add('sheet-in');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function refreshChapterProgress(chapterName, justCompletedNew){
+  const chIndices = CHAPTERS.find(c => c.name === chapterName).indices;
+  const chDone = chIndices.filter(idx => completed.has(LESSONS[idx].id)).length;
+  const fillEl = document.getElementById('chapter-progress-fill');
+  if(fillEl) fillEl.style.width = `${Math.round((chDone/chIndices.length)*100)}%`;
+  if(justCompletedNew && chDone === chIndices.length){
+    const toast = document.getElementById('chapter-toast');
+    toast.textContent = `✓ ${chapterName} complete`;
+    toast.classList.add('show');
+    clearTimeout(refreshChapterProgress._t);
+    refreshChapterProgress._t = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+}
+
+function checkAnswer(){
+  const l = LESSONS[currentIndex];
+  const resultEl = document.getElementById('check-result');
+  if(l.reference){
+    resultEl.innerHTML = `<span style="color:var(--verified);">✓ noted — reference sheet marked read</span>`;
+    const isNew = !completed.has(l.id);
+    if(isNew){ completed.add(l.id); saveProgress(); updateProgressUI(); }
+    refreshChapterProgress(l.chapter, isNew);
+    document.getElementById('tb-status').textContent = 'Verified';
+    return;
+  }
+  const tokens = extractClasses(codeInput.value);
+  const allPass = l.checks.every(group => group.some(needed => tokens.includes(needed)));
+  if(allPass){
+    resultEl.innerHTML = `<span style="color:var(--verified);">✓ verified — matches the specification</span>`;
+    const isNew = !completed.has(l.id);
+    if(isNew){ completed.add(l.id); saveProgress(); updateProgressUI(); }
+    refreshChapterProgress(l.chapter, isNew);
+    document.getElementById('tb-status').textContent = 'Verified';
+  } else {
+    resultEl.innerHTML = `<span style="color:var(--alert);">✗ not to spec yet — see hint</span>`;
+  }
+}
+
+/* ================= events ================= */
+let debounceTimer;
+codeInput.addEventListener('input', () => {
+  const html = codeInput.value;
+  refreshEditor(html);
+  renderBOM(html);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => renderPreview(html), 450);
+});
+document.getElementById('run-btn').addEventListener('click', () => renderPreview(codeInput.value));
+document.getElementById('reset-btn').addEventListener('click', () => {
+  const starter = LESSONS[currentIndex].starter;
+  codeInput.value = starter;
+  refreshEditor(starter);
+  renderPreview(starter);
+  renderBOM(starter);
+  document.getElementById('check-result').textContent = '';
+});
+document.getElementById('check-btn').addEventListener('click', checkAnswer);
+document.getElementById('hint-btn').addEventListener('click', () => {
+  document.getElementById('check-result').innerHTML = `<span style="color:var(--amber);">hint: ${LESSONS[currentIndex].hint}</span>`;
+});
+document.getElementById('prev-btn').addEventListener('click', () => { if(currentIndex > 0) loadLesson(currentIndex - 1); });
+document.getElementById('next-btn').addEventListener('click', () => {
+  if(currentIndex < LESSONS.length - 1) loadLesson(currentIndex + 1); else showCover();
+});
+document.getElementById('begin-btn').addEventListener('click', () => showWorkspace(0));
+document.getElementById('index-link').addEventListener('click', showCover);
+document.getElementById('brand-home').addEventListener('click', showCover);
+
+loadProgress();
+</script>
+</body>
+</html>
