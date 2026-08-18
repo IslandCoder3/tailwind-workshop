@@ -198,13 +198,19 @@
   .tb-val.accent{color:var(--blue);}
 
   .howto{margin-top:16px; padding:16px; font-size:12.5px; color:var(--ink-dim); line-height:1.65;}
+  .legend-row{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); padding:3px 0;}
+  .legend-row .sheet-status{position:static; flex-shrink:0;}
   .howto strong{color:var(--ink); font-weight:600;}
   kbd.k{font-family:'IBM Plex Mono',monospace; color:var(--blue); background:var(--sheet-3); padding:1px 6px; border-radius:3px; font-size:11.5px;}
 
   .eyebrow{color:var(--amber); margin-bottom:6px;}
   .lesson-title{font-size:25px; font-weight:600; margin:0; letter-spacing:-.01em;}
 
-  .brief-panel{position:relative; padding:20px 22px; margin-bottom:20px; overflow:hidden;}
+  .brief-panel{position:relative; padding:20px 22px; margin-bottom:20px; overflow:hidden; border-left:3px solid var(--cat-color, var(--blue)); transition:border-color .3s ease;}
+  .browser-chrome{display:flex; align-items:center; gap:6px; padding:9px 14px; border-bottom:1px solid var(--line-soft); background:var(--sheet-2);}
+  .chrome-dot{width:8px; height:8px; border-radius:50%; opacity:.85; flex-shrink:0;}
+  .chrome-address{margin-left:8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-faint); background:var(--sheet); border:1px solid var(--line-soft); border-radius:4px; padding:3px 10px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .category-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px; flex-shrink:0;}
   .brief-panel::before{content:''; position:absolute; top:0; right:0; width:26px; height:26px; background:linear-gradient(135deg, transparent 50%, var(--sheet-3) 50%); border-bottom:1px solid var(--line-soft); border-left:1px solid var(--line-soft);}
   .brief-text{font-size:14.5px; line-height:1.7; margin:0; max-width:64ch; color:var(--ink);}
 
@@ -363,8 +369,11 @@
         </div>
 
         <div class="panel howto">
-          <strong class="f-display" style="font-size:13px; display:block; margin-bottom:6px;">How the bench works</strong>
-          Edit the specification (real HTML) on the left. The rendered view updates live. Hover any row in the <strong>bill of materials</strong> to trace where that class is used. Press <kbd class="k">Check</kbd> when it matches the brief.
+          <strong class="f-display" style="font-size:13px; display:block; margin-bottom:10px;">How the bench works</strong>
+          <div class="legend-row"><span class="sheet-status"></span> not yet reached</div>
+          <div class="legend-row"><span class="sheet-status done"></span> verified</div>
+          <div class="legend-row"><span class="category-dot" style="background:var(--blue)"></span> category color-coding, matched in the sidebar and sheet header</div>
+          <p style="margin:10px 0 0; color:var(--ink-dim); line-height:1.6;">Edit the specification on the left, hover the <strong style="color:var(--ink);">bill of materials</strong> to trace classes, press <kbd class="k">Check</kbd> when it matches the brief.</p>
         </div>
       </aside>
 
@@ -377,7 +386,7 @@
             <div class="chapter-progress-bar"><div class="chapter-progress-fill" id="chapter-progress-fill" style="width:0%"></div></div>
           </div>
 
-          <div class="panel brief-panel" style="margin-top:20px;">
+          <div class="panel brief-panel" id="brief-panel" style="margin-top:20px;">
             <p class="label" style="margin-bottom:8px;">Specification note</p>
             <p class="brief-text" id="lesson-brief"></p>
           </div>
@@ -408,6 +417,12 @@
               <div class="toolbar">
                 <span class="label">Rendered view</span>
                 <span class="label" style="padding:11px 10px;"><span class="live-dot"></span>live</span>
+              </div>
+              <div class="browser-chrome">
+                <span class="chrome-dot" style="background:#E8697A;"></span>
+                <span class="chrome-dot" style="background:#E3A64F;"></span>
+                <span class="chrome-dot" style="background:#6FCF97;"></span>
+                <span class="chrome-address" id="preview-address">preview/sheet-01.html</span>
               </div>
               <iframe id="preview-frame" title="Live preview"></iframe>
             </div>
@@ -1020,6 +1035,16 @@ const LESSONS = [
 
 
 /* ================= chapters ================= */
+const CATEGORY_COLOR = {
+  'Box model':'#5AA9E6', 'Sizing':'#5AA9E6', 'Flexbox':'#5AA9E6', 'Grid':'#5AA9E6', 'Position':'#5AA9E6', 'Layout':'#5AA9E6',
+  'Typography':'#E3A64F',
+  'Color':'#D98BB0', 'Borders':'#D98BB0',
+  'Effects':'#9B8CE0', 'Motion':'#9B8CE0',
+  'Interactivity':'#5FC7B8', 'Forms':'#5FC7B8', 'Responsive':'#5FC7B8',
+  'Reference':'#8695AC', 'Advanced':'#8695AC',
+};
+function categoryColor(cat){ return CATEGORY_COLOR[cat] || 'var(--blue)'; }
+
 function buildChapters(){
   const map = new Map();
   LESSONS.forEach((l, i) => {
@@ -1111,16 +1136,18 @@ function renderCover(){
       const scaleLabel = scales[0] === scales[scales.length-1] ? scales[0] : `${scales[0]} – ${scales[scales.length-1]}`;
       const pct = Math.round((done / ch.indices.length) * 100);
 
+      const catColor = categoryColor(LESSONS[ch.indices[0]].category);
       const card = document.createElement('button');
       card.className = 'panel chapter-card';
       card.dataset.status = status;
       card.style.setProperty('--mx', '50%');
       card.style.setProperty('--my', '50%');
+      card.style.borderTop = `2px solid ${catColor}`;
       card.style.animationDelay = `${Math.min(cardCounter * 0.03, 0.4)}s`;
       cardCounter++;
       card.innerHTML = `
         <div class="chapter-top">
-          <span class="chapter-num">CH.${String(ch.ci+1).padStart(2,'0')}</span>
+          <span class="chapter-num" style="color:${catColor};">CH.${String(ch.ci+1).padStart(2,'0')}</span>
           <div class="chapter-ring${done===ch.indices.length?' done':''}" style="--pct:${pct}"><span>${done}/${ch.indices.length}</span></div>
         </div>
         <h3 class="chapter-name f-display">${ch.name}</h3>
@@ -1170,7 +1197,7 @@ function renderSheetIndex(){
       btn.innerHTML = `
         <span class="sheet-num f-mono">S${String(i+1).padStart(2,'0')}</span>
         <span class="sheet-status${isDone?' done':''}"></span>
-        <span class="sheet-labels"><span class="sheet-title">${l.title}</span></span>
+        <span class="sheet-labels"><span class="sheet-title"><span class="category-dot" style="background:${categoryColor(l.category)}"></span>${l.title}</span></span>
       `;
       btn.addEventListener('click', () => loadLesson(i));
       nav.appendChild(btn);
@@ -1199,8 +1226,10 @@ function loadLesson(i){
   const posInChapter = chIndices.indexOf(i) + 1;
 
   document.getElementById('breadcrumb').innerHTML = `<span>${l.chapter}</span><span class="sep">/</span><span class="current">Sheet ${posInChapter} of ${chIndices.length}</span>`;
-  document.getElementById('lesson-eyebrow').textContent = `${l.category} · Sheet S${String(i+1).padStart(2,'0')} of ${LESSONS.length}`;
+  document.getElementById('lesson-eyebrow').innerHTML = `<span class="category-dot" style="background:${categoryColor(l.category)}"></span>${l.category} · Sheet S${String(i+1).padStart(2,'0')} of ${LESSONS.length}`;
   document.getElementById('lesson-title').textContent = l.title;
+  document.getElementById('brief-panel').style.setProperty('--cat-color', categoryColor(l.category));
+  document.getElementById('preview-address').textContent = `preview/${l.id}.html`;
   document.getElementById('chapter-progress-fill').style.width = `${Math.round((chDone/chIndices.length)*100)}%`;
   document.getElementById('lesson-brief').textContent = l.brief;
   document.getElementById('tb-sheet').textContent = `S${String(i+1).padStart(2,'0')} / ${String(LESSONS.length).padStart(2,'0')}`;
