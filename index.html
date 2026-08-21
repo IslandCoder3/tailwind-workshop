@@ -260,6 +260,20 @@
   .tk-cls.mod{color:var(--pink);}
   .tk-cls.tk-hl{background:rgba(124,147,255,.24); box-shadow:0 0 0 1px rgba(124,147,255,.45);}
 
+  .ac-menu{
+    position:absolute; z-index:6; display:none; min-width:190px; max-width:280px; max-height:210px; overflow-y:auto;
+    background:rgba(26,23,42,.97); backdrop-filter:blur(6px); border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 18px 40px -14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+    padding:5px; font-family:'IBM Plex Mono',monospace;
+  }
+  .ac-menu.show{display:block;}
+  .ac-item{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:12px; color:var(--ink-dim);}
+  .ac-item.active, .ac-item:hover{background:var(--sheet-3); color:var(--ink);}
+  .ac-item .ac-name{color:var(--blue); font-weight:600; flex-shrink:0;}
+  .ac-item.active .ac-name, .ac-item:hover .ac-name{color:var(--blue);}
+  .ac-item .ac-desc{font-family:'IBM Plex Sans',sans-serif; font-size:10.5px; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ac-item .ac-kind{font-size:9px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); background:var(--sheet-2); border:1px solid var(--line-soft); border-radius:4px; padding:1px 5px; flex-shrink:0; margin-left:auto;}
+
   .action-row{display:flex; align-items:center; gap:10px; padding:12px 14px; border-top:1px solid var(--line-soft);}
   #check-result{padding:0 14px 14px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; min-height:18px;}
 
@@ -437,6 +451,7 @@
               <div class="editor-wrap">
                 <pre id="code-highlight" class="scroll" aria-hidden="true"></pre>
                 <textarea id="code-input" class="scroll" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+                <div id="ac-menu" class="ac-menu scroll" role="listbox"></div>
               </div>
               <div class="action-row">
                 <button class="btn btn-primary" id="run-btn">▶ Run</button>
@@ -1353,12 +1368,190 @@ function checkAnswer(){
   }
 }
 
+/* ================= autocomplete (tags + Tailwind classes) ================= */
+const TAG_LIST = [
+  {name:'div', desc:'generic block container'}, {name:'span', desc:'generic inline container'},
+  {name:'button', desc:'clickable button'}, {name:'a', desc:'hyperlink'},
+  {name:'p', desc:'paragraph'}, {name:'h1', desc:'heading, level 1'}, {name:'h2', desc:'heading, level 2'},
+  {name:'h3', desc:'heading, level 3'}, {name:'h4', desc:'heading, level 4'},
+  {name:'ul', desc:'unordered list'}, {name:'ol', desc:'ordered list'}, {name:'li', desc:'list item'},
+  {name:'img', desc:'image'}, {name:'input', desc:'form input'}, {name:'textarea', desc:'multi-line input'},
+  {name:'select', desc:'dropdown select'}, {name:'option', desc:'select option'}, {name:'label', desc:'form field label'},
+  {name:'form', desc:'form container'}, {name:'nav', desc:'navigation landmark'}, {name:'header', desc:'header region'},
+  {name:'footer', desc:'footer region'}, {name:'section', desc:'thematic section'}, {name:'article', desc:'self-contained content'},
+  {name:'main', desc:'main content landmark'}, {name:'aside', desc:'tangential content'},
+  {name:'svg', desc:'vector graphic'}, {name:'circle', desc:'SVG circle'}, {name:'path', desc:'SVG path'}, {name:'rect', desc:'SVG rectangle'},
+  {name:'table', desc:'table'}, {name:'thead', desc:'table header group'}, {name:'tbody', desc:'table body group'},
+  {name:'tr', desc:'table row'}, {name:'td', desc:'table cell'}, {name:'th', desc:'table header cell'},
+  {name:'pre', desc:'preformatted text block'}, {name:'code', desc:'inline code'},
+  {name:'strong', desc:'bold emphasis'}, {name:'em', desc:'italic emphasis'}, {name:'br', desc:'line break'},
+];
+
+const BASE_CLASSES = ["-order-1","-right-0.5","-top-0.5","@container","@sm:flex-row","absolute","accent-teal-500","accent-teal-600","animate-pulse","animate-spin","aria-selected:bg-teal-100","aria-selected:bg-teal-50","aspect-[16/9]","aspect-video","backdrop-blur","backdrop-blur-md","backdrop-blur-sm","bg-amber-100","bg-amber-50","bg-emerald-500","bg-gradient-to-br","bg-gradient-to-r","bg-red-600","bg-rose-100","bg-rose-50","bg-rose-600","bg-slate-100","bg-slate-200","bg-slate-800","bg-slate-900","bg-teal-100","bg-teal-50","bg-teal-500","bg-white","bg-white/20","bg-white/30","bg-white/40","blur","blur-md","blur-sm","border","border-2","border-amber-300","border-b","border-rose-300","border-slate-200","border-slate-300","border-t-teal-600","border-teal-300","border-teal-400","border-white","bottom-4","brightness-50","brightness-75","brightness-90","caret-teal-500","caret-teal-600","col-end-4","col-span-2","col-start-2","columns-2","disabled:opacity-50","duration-300","even:bg-slate-50","fill-teal-400","fill-teal-500","flex","flex-1","flex-col","focus-visible:ring-2","focus-within:ring-2","focus:outline","focus:ring-2","focus:ring-teal-400","focus:ring-teal-500","font-bold","font-mono","font-semibold","from-amber-300","from-indigo-500","from-slate-400","from-teal-400","from-teal-500","gap-2","gap-3","gap-4","gap-6","gap-8","grayscale","grid","grid-cols-3","grid-cols-4","group","group-hover:opacity-100","h-10","h-12","h-14","h-16","h-20","h-24","h-28","h-3","h-3.5","h-32","h-6","h-8","h-full","has-checked:border-teal-500","hover:bg-teal-600","hover:bg-teal-700","inset-0","inset-x-4","items-center","justify-between","justify-center","last:border-b-0","line-clamp-2","list-disc","list-inside","max-w-lg","max-w-md","max-w-xl","md:flex-row","min-w-80","mix-blend-multiply","mix-blend-overlay","motion-reduce:transition-none","mt-1","mt-2","mt-3","mx-auto","object-cover","odd:bg-slate-50","opacity-0","opacity-50","order-first","outline-none","overflow-auto","overflow-hidden","overflow-x-auto","p-2","p-3","p-4","p-6","p-8","pb-1","place-items-center","pointer-events-none","print:hidden","px-2","px-3","px-4","py-0.5","py-1","py-2","relative","resize-none","right-0","right-1","right-2","rounded","rounded-full","rounded-lg","rounded-md","select-none","shadow-lg","shadow-sm","shadow-xl","shrink-0","size-16","snap-x","snap-mandatory","snap-center","stroke-2","stroke-teal-600","stroke-teal-700","text-2xl","text-amber-600","text-balance","text-center","text-gray-400","text-rose-600","text-shadow","text-shadow-lg","text-shadow-md","text-shadow-sm","text-slate-300","text-slate-400","text-slate-500","text-slate-600","text-sm","text-teal-300","text-teal-600","text-teal-700","text-white","text-xl","text-xs","to-blue-500","to-blue-600","to-rose-400","to-slate-600","to-teal-400","top-0","top-1","top-2","tracking-wider","tracking-widest","transition","transition-colors","truncate","underline","w-10","w-12","w-14","w-24","w-3","w-3.5","w-32","w-40","w-56","w-6","w-64","w-8","w-80","w-full","whitespace-pre","whitespace-pre-wrap"];
+
+const COLOR_FAMILIES = ['slate','gray','zinc','neutral','stone','red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose'];
+const SHADES = [50,100,200,300,400,500,600,700,800,900,950];
+const COLOR_PREFIXES = ['bg','text','border','ring','from','via','to','fill','stroke','accent','caret','decoration'];
+
+function classSuggestions(token){
+  const t = token.toLowerCase();
+  if(!t) return [];
+  const out = new Set();
+  BASE_CLASSES.forEach(c => { if(c.toLowerCase().startsWith(t)) out.add(c); });
+  const famMatch = t.match(/^([a-z]+)-([a-z]*)$/);
+  if(famMatch && COLOR_PREFIXES.includes(famMatch[1])){
+    COLOR_FAMILIES.forEach(fam => { if(fam.startsWith(famMatch[2])) SHADES.forEach(sh => out.add(`${famMatch[1]}-${fam}-${sh}`)); });
+  }
+  const shadeMatch = t.match(/^([a-z]+)-([a-z]+)-(\d*)$/);
+  if(shadeMatch && COLOR_PREFIXES.includes(shadeMatch[1]) && COLOR_FAMILIES.includes(shadeMatch[2])){
+    SHADES.forEach(sh => { if(String(sh).startsWith(shadeMatch[3])) out.add(`${shadeMatch[1]}-${shadeMatch[2]}-${sh}`); });
+  }
+  return Array.from(out).sort().slice(0, 8);
+}
+
+const acMenu = document.getElementById('ac-menu');
+let acItems = [];
+let acIndex = 0;
+let acReplaceRange = null; // {start, end}
+
+function getCaretCoords(textarea, pos){
+  const mirror = document.createElement('div');
+  const cs = getComputedStyle(textarea);
+  ['boxSizing','width','paddingTop','paddingRight','paddingBottom','paddingLeft','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','whiteSpace','wordWrap','wordBreak']
+    .forEach(p => { mirror.style[p] = cs[p]; });
+  mirror.style.position = 'absolute';
+  mirror.style.visibility = 'hidden';
+  mirror.style.top = '0';
+  mirror.style.left = '-9999px';
+  mirror.style.height = 'auto';
+  mirror.style.overflow = 'visible';
+  document.body.appendChild(mirror);
+  mirror.textContent = textarea.value.substring(0, pos);
+  const span = document.createElement('span');
+  span.textContent = textarea.value.substring(pos) || '.';
+  mirror.appendChild(span);
+  const coords = { top: span.offsetTop, left: span.offsetLeft, lineHeight: parseFloat(cs.lineHeight) || 18 };
+  document.body.removeChild(mirror);
+  return coords;
+}
+
+function closeAcMenu(){
+  acMenu.classList.remove('show');
+  acItems = []; acIndex = 0; acReplaceRange = null;
+}
+
+function detectAcContext(){
+  const pos = codeInput.selectionStart;
+  if(pos !== codeInput.selectionEnd) return null;
+  const before = codeInput.value.slice(0, pos);
+
+  const classAttrOpen = before.match(/class="([^"]*)$/);
+  if(classAttrOpen){
+    const value = classAttrOpen[1];
+    const lastSpace = value.lastIndexOf(' ');
+    const token = value.slice(lastSpace + 1);
+    if(token.length === 0) return null;
+    const start = pos - token.length;
+    return { kind:'class', token, start, end:pos };
+  }
+
+  const tagOpen = before.match(/<\/?([a-zA-Z]*)$/);
+  if(tagOpen){
+    const token = tagOpen[1];
+    const start = pos - token.length;
+    return { kind:'tag', token, start, end:pos };
+  }
+  return null;
+}
+
+function updateAcMenu(){
+  const ctx = detectAcContext();
+  if(!ctx){ closeAcMenu(); return; }
+
+  let matches;
+  if(ctx.kind === 'tag'){
+    const t = ctx.token.toLowerCase();
+    matches = TAG_LIST.filter(tag => tag.name.startsWith(t)).slice(0, 8).map(tag => ({ label: tag.name, desc: tag.desc, kind:'tag' }));
+  } else {
+    matches = classSuggestions(ctx.token).map(cls => ({ label: cls, desc: decodeToken(cls).meaning, kind:'class' }));
+  }
+  if(matches.length === 0){ closeAcMenu(); return; }
+
+  acItems = matches;
+  acIndex = 0;
+  acReplaceRange = { start: ctx.start, end: ctx.end };
+  renderAcMenu();
+
+  const coords = getCaretCoords(codeInput, ctx.start);
+  const top = coords.top - codeInput.scrollTop + coords.lineHeight + 4;
+  const left = coords.left - codeInput.scrollLeft;
+  acMenu.style.top = `${top}px`;
+  acMenu.style.left = `${Math.min(left, codeInput.clientWidth - 200)}px`;
+  acMenu.classList.add('show');
+}
+
+function renderAcMenu(){
+  acMenu.innerHTML = acItems.map((it, i) => `
+    <div class="ac-item${i===acIndex?' active':''}" data-i="${i}">
+      <span class="ac-name">${it.label}</span>
+      <span class="ac-desc">${it.desc}</span>
+      <span class="ac-kind">${it.kind}</span>
+    </div>
+  `).join('');
+  acMenu.querySelectorAll('.ac-item').forEach(el => {
+    el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      acceptAcItem(parseInt(el.dataset.i, 10));
+    });
+  });
+  const active = acMenu.querySelector('.ac-item.active');
+  if(active) active.scrollIntoView({ block:'nearest' });
+}
+
+function acceptAcItem(i){
+  const item = acItems[i];
+  if(!item || !acReplaceRange) return;
+  const { start, end } = acReplaceRange;
+  const value = codeInput.value;
+  const newValue = value.slice(0, start) + item.label + value.slice(end);
+  codeInput.value = newValue;
+  const newPos = start + item.label.length;
+  codeInput.setSelectionRange(newPos, newPos);
+  closeAcMenu();
+  refreshEditor(newValue);
+  renderBOM(newValue);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => renderPreview(newValue), 450);
+  codeInput.focus();
+}
+
+codeInput.addEventListener('keydown', (e) => {
+  if(!acMenu.classList.contains('show')) return;
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    acIndex = (acIndex + 1) % acItems.length;
+    renderAcMenu();
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    acIndex = (acIndex - 1 + acItems.length) % acItems.length;
+    renderAcMenu();
+  } else if(e.key === 'Enter' || e.key === 'Tab'){
+    e.preventDefault();
+    acceptAcItem(acIndex);
+  } else if(e.key === 'Escape'){
+    closeAcMenu();
+  }
+});
+codeInput.addEventListener('click', closeAcMenu);
+codeInput.addEventListener('blur', () => setTimeout(closeAcMenu, 120));
+
 /* ================= events ================= */
 let debounceTimer;
 codeInput.addEventListener('input', () => {
   const html = codeInput.value;
   refreshEditor(html);
   renderBOM(html);
+  updateAcMenu();
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => renderPreview(html), 450);
 });
