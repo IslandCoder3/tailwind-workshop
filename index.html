@@ -129,10 +129,11 @@
   /* chapter-complete toast */
   #chapter-toast{
     position:fixed; left:50%; top:20px; transform:translateX(-50%) translateY(-16px); z-index:60; opacity:0; pointer-events:none;
-    transition:opacity .3s ease, transform .3s ease; background:rgba(20,18,32,.7); backdrop-filter:blur(20px);
-    border:1px solid rgba(74,222,128,.4); border-radius:9999px; padding:10px 20px;
-    font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600; color:var(--verified);
-    box-shadow:0 14px 34px -12px rgba(0,0,0,.6), 0 0 24px -6px rgba(74,222,128,.4);
+    transition:opacity .3s ease, transform .3s ease; background:rgba(20,18,32,.75); backdrop-filter:blur(20px);
+    border:1px solid rgba(124,147,255,.4); border-radius:9999px; padding:10px 20px;
+    font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600; color:var(--ink);
+    box-shadow:0 14px 34px -12px rgba(0,0,0,.6), 0 0 24px -6px rgba(124,147,255,.35);
+    max-width:min(90vw, 420px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   #chapter-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
@@ -298,6 +299,50 @@
   .bom-meaning .tag{color:var(--amber);}
   .bom-empty{padding:16px 18px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-faint);}
 
+  /* ================= CHEAT SHEET ================= */
+  .cheat-search{
+    width:100%; max-width:520px; padding:12px 18px; border-radius:9999px; margin-bottom:34px;
+    background:var(--sheet-2); border:1px solid var(--line); color:var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:13px; outline:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .cheat-search::placeholder{color:var(--ink-faint);}
+  .cheat-search:focus{border-color:var(--blue); background:var(--sheet-3);}
+  .cheat-group{margin-bottom:28px;}
+  .cheat-group-head{display:flex; align-items:baseline; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+  .cheat-group-name{font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; margin:0;}
+  .cheat-group-count{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-faint);}
+  .cheat-chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .cheat-chip{
+    display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:9999px;
+    background:var(--sheet-2); border:1px solid var(--line); cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-dim);
+    transition:background .15s ease, border-color .15s ease, transform .12s ease, color .15s ease;
+  }
+  .cheat-chip:hover{background:var(--sheet-3); border-color:var(--blue); color:var(--ink); transform:translateY(-1px);}
+  .cheat-chip:active{transform:scale(.95);}
+  .cheat-chip.copied{background:rgba(74,222,128,.16); border-color:var(--verified); color:var(--verified);}
+  .cheat-chip .cc-icon{font-size:11px; opacity:.6;}
+  .cheat-empty{color:var(--ink-faint); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:20px 0;}
+  .palette-toggle{display:flex; gap:6px; margin:12px 0 16px; flex-wrap:wrap;}
+  .palette-toggle button{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; padding:5px 12px; border-radius:9999px;
+    background:var(--sheet-2); border:1px solid var(--line); color:var(--ink-dim); cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .palette-toggle button.active{background:var(--blue); color:#0A0912; border-color:var(--blue);}
+  .palette-toggle button:hover:not(.active){border-color:var(--ink-faint); color:var(--ink);}
+  .palette-row{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .palette-fam{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint); width:64px; flex-shrink:0;}
+  .palette-shades{display:flex; gap:4px; flex-wrap:wrap;}
+  .palette-chip{
+    width:30px; height:26px; border-radius:6px; border:1px solid var(--line); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--ink-faint);
+    background:var(--sheet-2); transition:background .15s ease, border-color .15s ease, transform .12s ease, color .15s ease;
+  }
+  .palette-chip:hover{border-color:var(--blue); color:var(--ink); transform:translateY(-1px);}
+  .palette-chip.copied{background:rgba(74,222,128,.2); border-color:var(--verified); color:var(--verified);}
+
   /* completion stamp */
   #stamp{
     position:fixed; right:26px; bottom:26px; z-index:50; display:none; align-items:center; justify-content:center; width:118px; height:118px; border-radius:50%;
@@ -374,6 +419,7 @@
         <span class="ruler-num" id="progress-label">0 / 0</span>
         <div class="ruler-ticks" id="ruler-ticks"></div>
       </div>
+      <button class="index-link" id="cheatsheet-link">Cheat sheet</button>
       <button class="index-link" id="index-link">Sheet index</button>
     </div>
   </div>
@@ -492,6 +538,25 @@
       </main>
     </div>
   </div>
+
+  <!-- ================= CHEAT SHEET ================= -->
+  <section id="cheatsheet" style="display:none;">
+    <p class="label cover-eyebrow">Quick reference</p>
+    <h1 class="cover-title f-display">Tailwind <span class="grad">cheat sheet.</span></h1>
+    <p class="cover-sub">Every class taught in this course, grouped by category. Click any chip to copy it straight to your clipboard.</p>
+    <input type="text" id="cheat-search" class="cheat-search" placeholder="Search classes… e.g. flex, gap, rounded, hover" autocomplete="off" />
+    <div id="cheat-groups"></div>
+
+    <div class="cheat-group">
+      <div class="cheat-group-head">
+        <span class="tier-badge" style="border-color:var(--blue); color:var(--blue);">Full color palette</span>
+        <span class="cheat-group-count">22 families × 11 shades — not limited to what's taught</span>
+      </div>
+      <div class="palette-toggle" id="palette-toggle"></div>
+      <div id="palette-rows"></div>
+    </div>
+  </section>
+
 </div>
 
 <div id="chapter-toast"></div>
@@ -1105,6 +1170,139 @@ function buildChapters(){
 }
 const CHAPTERS = buildChapters();
 
+/* ================= cheat sheet ================= */
+function buildCheatsheetData(){
+  const map = new Map();
+  LESSONS.forEach(l => {
+    if(!map.has(l.category)) map.set(l.category, new Set());
+    l.checks.forEach(group => group.forEach(c => map.get(l.category).add(c)));
+  });
+  return Array.from(map.entries())
+    .map(([category, set]) => ({ category, color: categoryColor(category), items: Array.from(set).sort() }))
+    .filter(g => g.items.length > 0);
+}
+const CHEATSHEET_DATA = buildCheatsheetData();
+
+async function copyToClipboard(text, chipEl){
+  let ok = false;
+  try{
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  }catch(e){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok = true;
+    }catch(e2){ ok = false; }
+  }
+  if(ok){
+    showToast(`⧉ copied "${text}" to clipboard`);
+  } else {
+    showToast(`✗ couldn't copy — select and copy manually`);
+  }
+  if(ok && chipEl){
+    const icon = chipEl.querySelector('.cc-icon');
+    const prevIcon = icon.textContent;
+    chipEl.classList.add('copied');
+    icon.textContent = '✓';
+    clearTimeout(chipEl._copyTimer);
+    chipEl._copyTimer = setTimeout(() => {
+      chipEl.classList.remove('copied');
+      icon.textContent = prevIcon;
+    }, 1100);
+  }
+}
+
+function renderCheatsheet(query){
+  const container = document.getElementById('cheat-groups');
+  const q = (query || '').trim().toLowerCase();
+  container.innerHTML = '';
+  let totalShown = 0;
+
+  CHEATSHEET_DATA.forEach(group => {
+    const items = q ? group.items.filter(c => c.toLowerCase().includes(q)) : group.items;
+    if(items.length === 0) return;
+    totalShown += items.length;
+
+    const el = document.createElement('div');
+    el.className = 'cheat-group';
+    el.innerHTML = `
+      <div class="cheat-group-head">
+        <span class="tier-badge" style="--tier-color:${group.color}; border-color:${group.color}; color:${group.color};">${group.category}</span>
+        <span class="cheat-group-count">${items.length} class${items.length>1?'es':''}</span>
+      </div>
+      <div class="cheat-chips"></div>
+    `;
+    const chipsWrap = el.querySelector('.cheat-chips');
+    items.forEach(cls => {
+      const chip = document.createElement('button');
+      chip.className = 'cheat-chip';
+      chip.type = 'button';
+      chip.title = decodeToken(cls).meaning;
+      chip.innerHTML = `<span class="cc-name">${cls}</span><span class="cc-icon">⧉</span>`;
+      chip.addEventListener('click', () => copyToClipboard(cls, chip));
+      chipsWrap.appendChild(chip);
+    });
+    container.appendChild(el);
+  });
+
+  if(totalShown === 0){
+    container.innerHTML = `<p class="cheat-empty">No classes match "${query}".</p>`;
+  }
+}
+
+document.getElementById('cheat-search').addEventListener('input', (e) => renderCheatsheet(e.target.value));
+document.getElementById('cheatsheet-link').addEventListener('click', showCheatsheet);
+
+const PALETTE_PREFIXES = ['bg', 'text', 'border', 'ring'];
+let activePalettePrefix = 'bg';
+
+function renderPaletteToggle(){
+  const el = document.getElementById('palette-toggle');
+  el.innerHTML = PALETTE_PREFIXES.map(p => `<button data-p="${p}" class="${p===activePalettePrefix?'active':''}">${p}-*</button>`).join('');
+  el.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activePalettePrefix = btn.dataset.p;
+      renderPaletteToggle();
+      renderPaletteRows();
+    });
+  });
+}
+
+function renderPaletteRows(){
+  const rows = document.getElementById('palette-rows');
+  rows.innerHTML = '';
+  COLOR_FAMILIES.forEach(fam => {
+    const row = document.createElement('div');
+    row.className = 'palette-row';
+    row.innerHTML = `<span class="palette-fam">${fam}</span><span class="palette-shades"></span>`;
+    const shadesWrap = row.querySelector('.palette-shades');
+    SHADES.forEach(sh => {
+      const cls = `${activePalettePrefix}-${fam}-${sh}`;
+      const chip = document.createElement('button');
+      chip.className = 'palette-chip';
+      chip.type = 'button';
+      chip.title = cls;
+      chip.textContent = sh;
+      chip.addEventListener('click', () => {
+        copyToClipboard(cls, null);
+        chip.classList.add('copied');
+        clearTimeout(chip._t);
+        chip._t = setTimeout(() => chip.classList.remove('copied'), 1100);
+      });
+      shadesWrap.appendChild(chip);
+    });
+    rows.appendChild(row);
+  });
+}
+
+
 const TIER_INFO = [
   { name:'Essential', desc:'used in nearly every project', color:'#5AA9E6' },
   { name:'Common', desc:'reached for regularly', color:'#E3A64F' },
@@ -1278,15 +1476,28 @@ function renderSheetIndex(){
 
 function showWorkspace(index){
   document.getElementById('cover').style.display = 'none';
+  document.getElementById('cheatsheet').style.display = 'none';
   document.getElementById('workspace').style.display = 'block';
   loadLesson(index);
 }
 function showCover(){
   document.getElementById('workspace').style.display = 'none';
+  document.getElementById('cheatsheet').style.display = 'none';
   document.getElementById('cover').style.display = 'block';
   currentIndex = -1;
   document.documentElement.style.setProperty('--glow-color', '#5AA9E6');
   renderCover();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function showCheatsheet(){
+  document.getElementById('workspace').style.display = 'none';
+  document.getElementById('cover').style.display = 'none';
+  document.getElementById('cheatsheet').style.display = 'block';
+  currentIndex = -1;
+  document.documentElement.style.setProperty('--glow-color', '#5AA9E6');
+  renderCheatsheet();
+  renderPaletteToggle();
+  renderPaletteRows();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -1330,17 +1541,21 @@ function loadLesson(i){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+function showToast(message){
+  const toast = document.getElementById('chapter-toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
 function refreshChapterProgress(chapterName, justCompletedNew){
   const chIndices = CHAPTERS.find(c => c.name === chapterName).indices;
   const chDone = chIndices.filter(idx => completed.has(LESSONS[idx].id)).length;
   const fillEl = document.getElementById('chapter-progress-fill');
   if(fillEl) fillEl.style.width = `${Math.round((chDone/chIndices.length)*100)}%`;
   if(justCompletedNew && chDone === chIndices.length){
-    const toast = document.getElementById('chapter-toast');
-    toast.textContent = `✓ ${chapterName} complete`;
-    toast.classList.add('show');
-    clearTimeout(refreshChapterProgress._t);
-    refreshChapterProgress._t = setTimeout(() => toast.classList.remove('show'), 2600);
+    showToast(`✓ ${chapterName} complete`);
   }
 }
 
