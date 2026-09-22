@@ -4,7 +4,7 @@ A single-file, interactive learning tool for Tailwind CSS — 43 hands-on statio
 
 **Category:** Education / Developer Tools
 
-**Live site:** https://islandcoder3.github.io/tailwind-workshop/
+**Live site:** None — it's a single HTML file, open it directly in any browser
 
 **Built with:** HTML, CSS, JavaScript
 
@@ -15,7 +15,7 @@ Built as a hands-on alternative to reading Tailwind docs. Every station gives yo
 ## Features
 
 - Browsable, tiered curriculum (Essential → Common → Advanced → Rare & Reference)
-- Live HTML editor with syntax highlighting and VS Code-style autocomplete for tags and Tailwind classes
+- Live HTML editor with syntax highlighting
 - Real-time rendered preview via the Tailwind CDN
 - Class-by-class decoder with hover-to-trace highlighting
 - Per-station validation with hints
